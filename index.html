@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ABA Weekly Scheduler Prototype</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">▣</div>
+        <div>
+          <h1>Schedule</h1>
+          <p>ABA weekly scheduling prototype</p>
+        </div>
+      </div>
+
+      <div class="week-controls">
+        <button id="todayBtn" class="button secondary">Today</button>
+        <button id="previousWeekBtn" class="icon-button" aria-label="Previous week">‹</button>
+        <div class="week-heading">
+          <span class="view-badge">Week</span>
+          <div id="weekLabel" class="week-label"></div>
+        </div>
+        <button id="nextWeekBtn" class="icon-button" aria-label="Next week">›</button>
+      </div>
+
+      <div class="top-actions">
+        <button id="clearScheduleBtn" class="button danger-ghost">Clear week</button>
+        <button id="addClientBtn" class="button primary">+ Add client</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="calendar-panel">
+        <div class="calendar-toolbar">
+          <div>
+            <strong>Weekly calendar</strong>
+            <span>30-minute scheduling increments</span>
+          </div>
+          <div class="calendar-key">
+            <span><i class="key-dot under"></i>Under target</span>
+            <span><i class="key-dot met"></i>Target met</span>
+            <span><i class="key-dot over"></i>Over target</span>
+          </div>
+        </div>
+
+        <div class="calendar-scroll">
+          <div id="calendar" class="calendar" aria-label="Weekly calendar">
+            <div class="calendar-corner">Time</div>
+            <div id="dayHeaders" class="day-headers"></div>
+            <div id="timeLabels" class="time-labels"></div>
+            <div id="scheduleGrid" class="schedule-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="client-panel">
+        <div class="client-panel-header">
+          <div>
+            <h2>Clients</h2>
+            <p>Drag a client onto the calendar.</p>
+          </div>
+          <span id="clientCount" class="count-badge">0</span>
+        </div>
+
+        <div class="hours-summary">
+          <div class="hours-summary-top">
+            <span>Scheduled this week</span>
+            <strong id="weeklyHoursText">0 / 0 hrs</strong>
+          </div>
+          <div class="summary-progress">
+            <div id="weeklyHoursFill" class="summary-progress-fill"></div>
+          </div>
+          <p id="weeklyHoursMessage">Add appointments to begin tracking hours.</p>
+        </div>
+
+        <label class="search-box">
+          <span>⌕</span>
+          <input id="clientSearch" type="search" placeholder="Search clients..." />
+        </label>
+
+        <div id="clientList" class="client-list"></div>
+
+        <div class="help-card">
+          <strong>How to use</strong>
+          <p>Drag a client card over the calendar. The preview snaps to each 30-minute slot, similar to a modern calendar application.</p>
+          <p>Move scheduled blocks by dragging them. Resize a block with the handle along its bottom edge.</p>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div id="clientModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="clientModalTitle">
+    <form id="clientForm" class="modal">
+      <div class="modal-header">
+        <div>
+          <h2 id="clientModalTitle">Add client</h2>
+          <p>Create a draggable client card.</p>
+        </div>
+        <button id="closeModalBtn" type="button" class="icon-button">×</button>
+      </div>
+
+      <label>
+        Client name
+        <input id="clientNameInput" required maxlength="40" placeholder="Example: Client A" />
+      </label>
+
+      <label>
+        Weekly required hours
+        <input id="clientHoursInput" required type="number" min="0.5" max="80" step="0.5" value="10" />
+      </label>
+
+      <label>
+        Card color
+        <select id="clientColorInput">
+          <option value="blue">Blue</option>
+          <option value="purple">Purple</option>
+          <option value="green">Green</option>
+          <option value="yellow">Yellow</option>
+          <option value="pink">Pink</option>
+        </select>
+      </label>
+
+      <div class="modal-actions">
+        <button id="cancelModalBtn" type="button" class="button secondary">Cancel</button>
+        <button type="submit" class="button primary">Add client</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
