@@ -21,15 +21,27 @@
         <button id="todayBtn" class="button secondary">Today</button>
         <button id="previousWeekBtn" class="icon-button" aria-label="Previous week">‹</button>
         <div class="week-heading">
-          <span class="view-badge">Week</span>
+          <div class="view-switch" aria-label="Calendar view">
+            <button id="weekViewBtn" class="view-option active" type="button">Week</button>
+            <button id="monthViewBtn" class="view-option" type="button">Month</button>
+          </div>
           <div id="weekLabel" class="week-label"></div>
         </div>
         <button id="nextWeekBtn" class="icon-button" aria-label="Next week">›</button>
       </div>
 
       <div class="top-actions">
-        <button id="clearScheduleBtn" class="button danger-ghost">Clear week</button>
-        <button id="addClientBtn" class="button primary">+ Add client</button>
+        <div class="action-group">
+          <span class="action-group-label">Review</span>
+          <button id="weeklySummaryBtn" class="button secondary">Weekly summary</button>
+        </div>
+        <div class="action-group">
+          <span class="action-group-label">Create</span>
+          <button id="manageRulesBtn" class="button secondary">Rules</button>
+          <button id="addBlockBtn" class="button secondary">+ Block time</button>
+          <button id="addClientBtn" class="button primary">+ Add client</button>
+        </div>
+        <button id="clearScheduleBtn" class="button danger-ghost compact-button" title="Remove everything from the displayed week">Clear</button>
       </div>
     </header>
 
@@ -41,13 +53,14 @@
             <span>30-minute scheduling increments</span>
           </div>
           <div class="calendar-key">
+            <span><i class="key-dot block"></i>Blocked time</span>
             <span><i class="key-dot under"></i>Under target</span>
             <span><i class="key-dot met"></i>Target met</span>
             <span><i class="key-dot over"></i>Over target</span>
           </div>
         </div>
 
-        <div class="calendar-scroll">
+        <div id="weekView" class="calendar-scroll">
           <div id="calendar" class="calendar" aria-label="Weekly calendar">
             <div class="calendar-corner">Time</div>
             <div id="dayHeaders" class="day-headers"></div>
@@ -55,6 +68,7 @@
             <div id="scheduleGrid" class="schedule-grid"></div>
           </div>
         </div>
+        <div id="monthView" class="month-view hidden" aria-label="Monthly client hour summary"></div>
       </section>
 
       <aside class="client-panel">
@@ -68,7 +82,7 @@
 
         <div class="hours-summary">
           <div class="hours-summary-top">
-            <span>Scheduled this week</span>
+          <span>Tracked this week</span>
             <strong id="weeklyHoursText">0 / 0 hrs</strong>
           </div>
           <div class="summary-progress">
@@ -93,6 +107,117 @@
     </main>
   </div>
 
+  <div id="sessionModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="sessionModalTitle">
+    <form id="sessionForm" class="modal detail-modal">
+      <div class="modal-header">
+        <div>
+          <h2 id="sessionModalTitle">Session details</h2>
+          <p id="sessionModalSubtitle">Record what actually happened.</p>
+        </div>
+        <button id="closeSessionModalBtn" type="button" class="icon-button" aria-label="Close">×</button>
+      </div>
+      <input id="sessionIdInput" type="hidden" />
+      <div class="form-grid">
+        <label>
+          RBT identifier
+          <input id="sessionRbtInput" maxlength="40" placeholder="Example: RBT-104" />
+        </label>
+        <label>
+          Actual time (minutes)
+          <input id="sessionActualMinutesInput" type="number" min="0" max="1440" step="1" />
+        </label>
+      </div>
+      <label>
+        Service / appointment type
+        <select id="sessionRuleInput"></select>
+      </label>
+      <div class="session-notes-editor">
+        <label for="sessionNotesInput">Session notes</label>
+        <p>Write continuously. Press Enter for a new note or bullet point.</p>
+        <textarea id="sessionNotesInput" rows="7" maxlength="4000" placeholder="Practiced transitions with fewer prompts&#10;Reviewed replacement communication target&#10;Caregiver reported improved morning routine"></textarea>
+      </div>
+      <label>
+        Billing / non-billable notes
+        <textarea id="sessionBillingNotesInput" rows="3" maxlength="1000" placeholder="Document interruptions or time that could not be billed..."></textarea>
+      </label>
+      <label class="checkbox-label">
+        <input id="sessionTargetsMetInput" type="checkbox" />
+        Targets for this session were met
+      </label>
+      <div class="recurrence-panel">
+        <div>
+          <strong>Repeat session</strong>
+          <span>Create this same time slot in future weeks.</span>
+        </div>
+        <div class="recurrence-controls">
+          <select id="sessionRepeatInput" aria-label="Session recurrence">
+            <option value="none">Does not repeat</option>
+            <option value="weekly">Weekly</option>
+          </select>
+          <label class="repeat-count-label hidden" id="sessionRepeatCountLabel">
+            For
+            <input id="sessionRepeatCountInput" type="number" min="2" max="52" value="4" />
+            weeks
+          </label>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="deleteSessionBtn" type="button" class="button danger-ghost">Delete session</button>
+        <button id="cancelSessionModalBtn" type="button" class="button secondary">Cancel</button>
+        <button type="submit" class="button primary">Save details</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="blockModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="blockModalTitle">
+    <form id="blockForm" class="modal">
+      <div class="modal-header">
+        <div><h2 id="blockModalTitle">Block time</h2><p>Reserve time for billing, admin, meetings, or anything else.</p></div>
+        <button id="closeBlockModalBtn" type="button" class="icon-button" aria-label="Close">×</button>
+      </div>
+      <label>Title<input id="blockTitleInput" required maxlength="60" value="Billing" /></label>
+      <div class="form-grid">
+        <label>Day<select id="blockDayInput"></select></label>
+        <label>Start time<select id="blockStartInput"></select></label>
+        <label>Duration<select id="blockDurationInput"></select></label>
+      </div>
+      <label>Notes<textarea id="blockNotesInput" rows="3" maxlength="1000" placeholder="Optional details..."></textarea></label>
+      <div class="recurrence-panel">
+        <div>
+          <strong>Repeat blocked time</strong>
+          <span>Reserve this slot across future weeks.</span>
+        </div>
+        <div class="recurrence-controls">
+          <select id="blockRepeatInput" aria-label="Blocked time recurrence">
+            <option value="none">Does not repeat</option>
+            <option value="weekly">Weekly</option>
+          </select>
+          <label class="repeat-count-label hidden" id="blockRepeatCountLabel">
+            For
+            <input id="blockRepeatCountInput" type="number" min="2" max="52" value="4" />
+            weeks
+          </label>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="deleteBlockBtn" type="button" class="button danger-ghost hidden">Delete block</button>
+        <button id="cancelBlockModalBtn" type="button" class="button secondary">Cancel</button>
+        <button type="submit" class="button primary">Save block</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="summaryModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="summaryModalTitle">
+    <section class="modal summary-modal">
+      <div class="modal-header">
+        <div><h2 id="summaryModalTitle">Weekly summary</h2><p id="summaryWeekLabel"></p></div>
+        <button id="closeSummaryModalBtn" type="button" class="icon-button" aria-label="Close">×</button>
+      </div>
+      <div id="summaryContent"></div>
+      <div class="modal-actions"><button id="closeSummaryBtn" type="button" class="button primary">Done</button></div>
+    </section>
+  </div>
+
   <div id="clientModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="clientModalTitle">
     <form id="clientForm" class="modal">
       <div class="modal-header">
@@ -109,11 +234,6 @@
       </label>
 
       <label>
-        Weekly required hours
-        <input id="clientHoursInput" required type="number" min="0.5" max="80" step="0.5" value="10" />
-      </label>
-
-      <label>
         Card color
         <select id="clientColorInput">
           <option value="blue">Blue</option>
@@ -124,14 +244,54 @@
         </select>
       </label>
 
+      <fieldset class="target-fieldset">
+        <legend>Weekly service targets</legend>
+        <p>Set the hours this client needs for each rule. Leave a rule at 0 if it does not apply.</p>
+        <div id="clientTargetInputs" class="target-input-list"></div>
+      </fieldset>
+
+      <fieldset class="target-fieldset availability-fieldset">
+        <legend>Available weekdays</legend>
+        <p>Uncheck days when this client does not attend. The calendar will warn you and prevent scheduling on those days.</p>
+        <div id="clientAvailabilityInputs" class="weekday-checklist"></div>
+      </fieldset>
+
       <div class="modal-actions">
         <button id="cancelModalBtn" type="button" class="button secondary">Cancel</button>
-        <button type="submit" class="button primary">Add client</button>
+        <button id="saveClientBtn" type="submit" class="button primary">Add client</button>
       </div>
     </form>
   </div>
 
+  <div id="rulesModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="rulesModalTitle">
+    <section class="modal detail-modal">
+      <div class="modal-header">
+        <div>
+          <h2 id="rulesModalTitle">Service rules</h2>
+          <p>Create reusable appointment types, then set different hour targets for each client.</p>
+        </div>
+        <button id="closeRulesModalBtn" type="button" class="icon-button" aria-label="Close">×</button>
+      </div>
+      <form id="addRuleForm" class="rule-create-row">
+        <input id="ruleNameInput" required maxlength="50" placeholder="Example: Supervision" />
+        <select id="ruleColorInput" aria-label="Rule color">
+          <option value="blue">Blue</option>
+          <option value="purple">Purple</option>
+          <option value="green">Green</option>
+          <option value="yellow">Yellow</option>
+          <option value="pink">Pink</option>
+        </select>
+        <button class="button primary" type="submit">Add rule</button>
+      </form>
+      <div id="rulesList" class="rules-list"></div>
+      <div class="modal-actions">
+        <button id="closeRulesBtn" type="button" class="button primary">Done</button>
+      </div>
+    </section>
+  </div>
+
   <div id="toast" class="toast hidden" role="status"></div>
+  <aside id="clientHoverPopup" class="client-hover-summary" role="dialog" aria-label="Client quick summary"></aside>
 
   <script src="script.js"></script>
 </body>
