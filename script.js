@@ -24,9 +24,9 @@
   ];
 
   const defaultClients = [
-    { id: makeId(), name: "Rhyki", color: "blue", targets: { [DEFAULT_RULE_IDS.supervision]: 5, [DEFAULT_RULE_IDS.parentTraining]: 2 }, availability: [true, true, true, true, true] },
-    { id: makeId(), name: "LJ", color: "purple", targets: { [DEFAULT_RULE_IDS.supervision]: 4, [DEFAULT_RULE_IDS.parentTraining]: 1 }, availability: [true, true, true, true, true] },
-    { id: makeId(), name: "Geto", color: "green", targets: { [DEFAULT_RULE_IDS.supervision]: 6, [DEFAULT_RULE_IDS.parentTraining]: 2 }, availability: [true, true, true, true, true] },
+    { id: makeId(), name: "Client A", color: "blue", targets: { [DEFAULT_RULE_IDS.supervision]: 5, [DEFAULT_RULE_IDS.parentTraining]: 2 }, availability: [true, true, true, true, true] },
+    { id: makeId(), name: "Client B", color: "purple", targets: { [DEFAULT_RULE_IDS.supervision]: 4, [DEFAULT_RULE_IDS.parentTraining]: 1 }, availability: [true, true, true, true, true] },
+    { id: makeId(), name: "Client C", color: "green", targets: { [DEFAULT_RULE_IDS.supervision]: 6, [DEFAULT_RULE_IDS.parentTraining]: 2 }, availability: [true, true, true, true, true] },
     { id: makeId(), name: "Client D", color: "yellow", targets: { [DEFAULT_RULE_IDS.supervision]: 3, [DEFAULT_RULE_IDS.parentTraining]: 1 }, availability: [true, true, true, true, true] }
   ];
 
@@ -91,10 +91,12 @@
     blockDayInput: document.querySelector("#blockDayInput"),
     blockStartInput: document.querySelector("#blockStartInput"),
     blockDurationInput: document.querySelector("#blockDurationInput"),
+    blockDaySpanInput: document.querySelector("#blockDaySpanInput"),
     blockNotesInput: document.querySelector("#blockNotesInput"),
     blockRepeatInput: document.querySelector("#blockRepeatInput"),
     blockRepeatCountInput: document.querySelector("#blockRepeatCountInput"),
     blockRepeatCountLabel: document.querySelector("#blockRepeatCountLabel"),
+    blockRepeatUnit: document.querySelector("#blockRepeatUnit"),
     closeBlockModalBtn: document.querySelector("#closeBlockModalBtn"),
     cancelBlockModalBtn: document.querySelector("#cancelBlockModalBtn"),
     deleteBlockBtn: document.querySelector("#deleteBlockBtn"),
@@ -176,8 +178,64 @@
     }
   }
 
+  function addBusinessDays(date, count) {
+    const result = new Date(date);
+    let remaining = count;
+    while (remaining > 0) {
+      result.setDate(result.getDate() + 1);
+      if (result.getDay() !== 0 && result.getDay() !== 6) remaining -= 1;
+    }
+    return result;
+  }
+
+  function createDailyBlockRecurrences(source, count) {
+    const totalDays = clamp(Number(count) || 5, 2, 30);
+    const groupId = source.recurrenceGroupId || makeId();
+    const sourceDate = addDays(dateFromKey(source.weekKey), source.dayIndex);
+    const recurrenceStartDate = source.recurrenceStartDate || dateKey(sourceDate);
+    source.recurrenceGroupId = groupId;
+    source.recurrence = "daily";
+    source.recurrenceCount = totalDays;
+    source.recurrenceStartDate = recurrenceStartDate;
+
+    for (let offset = 1; offset < totalDays; offset += 1) {
+      const occurrenceDate = addBusinessDays(dateFromKey(recurrenceStartDate), offset);
+      const occurrenceWeek = startOfWeek(occurrenceDate);
+      const weekKey = dateKey(occurrenceWeek);
+      const dayIndex = Math.max(0, occurrenceDate.getDay() - 1);
+      const alreadyExists = state.blocks.some(
+        (item) =>
+          item.recurrenceGroupId === groupId &&
+          item.weekKey === weekKey &&
+          item.dayIndex === dayIndex
+      );
+      if (alreadyExists) continue;
+      state.blocks.push({
+        ...source,
+        id: makeId(),
+        weekKey,
+        dayIndex,
+        daySpan: Math.min(Number(source.daySpan) || 1, DAYS.length - dayIndex),
+        recurrenceGroupId: groupId,
+        recurrence: "daily",
+        recurrenceCount: totalDays,
+        recurrenceStartDate
+      });
+    }
+  }
+
   function updateRepeatVisibility(select, label) {
-    label.classList.toggle("hidden", select.value !== "weekly");
+    label.classList.toggle("hidden", select.value === "none");
+  }
+
+  function updateBlockRepeatControls() {
+    updateRepeatVisibility(elements.blockRepeatInput, elements.blockRepeatCountLabel);
+    const isDaily = elements.blockRepeatInput.value === "daily";
+    elements.blockRepeatUnit.textContent = isDaily ? "weekdays" : "weeks";
+    elements.blockRepeatCountInput.max = isDaily ? "30" : "52";
+    if (isDaily && Number(elements.blockRepeatCountInput.value) > 30) {
+      elements.blockRepeatCountInput.value = "5";
+    }
   }
 
   function formatMonthDay(date) {
@@ -675,29 +733,43 @@
   }
 
   function renderBlock(item) {
-    const column = elements.scheduleGrid.querySelector(
-      `.day-column[data-day-index="${item.dayIndex}"]`
-    );
-    if (!column) return;
-    const block = document.createElement("div");
-    block.className = "appointment calendar-block";
-    block.style.top = `${item.startSlot * SLOT_HEIGHT + 3}px`;
-    block.style.height = `${item.durationSlots * SLOT_HEIGHT - 6}px`;
-    const start = item.startSlot * SLOT_MINUTES;
-    block.innerHTML = `
-      <div class="appointment-title"><span>${escapeHtml(item.title)}</span><button class="edit-appointment" type="button">Edit</button></div>
-      <span class="appointment-time">${minutesToTime(start)} – ${minutesToTime(start + item.durationSlots * SLOT_MINUTES)}</span>
-      <span class="appointment-meta">${item.recurrence === "weekly" ? "↻ Weekly" : ""}${item.recurrence === "weekly" && item.notes ? " · " : ""}${item.notes ? escapeHtml(item.notes) : ""}</span>
-    `;
-    block.querySelector(".edit-appointment").addEventListener("click", (event) => {
-      event.stopPropagation();
-      showBlockModal(item);
-    });
-    block.addEventListener("pointerdown", (event) => {
-      if (event.target.closest(".edit-appointment")) return;
-      beginBlockMove(event, item, block);
-    });
-    column.appendChild(block);
+    const daySpan = Math.min(Number(item.daySpan) || 1, DAYS.length - item.dayIndex);
+    for (let offset = 0; offset < daySpan; offset += 1) {
+      const column = elements.scheduleGrid.querySelector(
+        `.day-column[data-day-index="${item.dayIndex + offset}"]`
+      );
+      if (!column) continue;
+      const block = document.createElement("div");
+      block.className = "appointment calendar-block";
+      block.dataset.blockId = item.id;
+      block.style.top = `${item.startSlot * SLOT_HEIGHT + 3}px`;
+      block.style.height = `${item.durationSlots * SLOT_HEIGHT - 6}px`;
+      const start = item.startSlot * SLOT_MINUTES;
+      const recurrenceText = item.recurrence === "daily"
+        ? "↻ Daily"
+        : item.recurrence === "weekly"
+          ? "↻ Weekly"
+          : "";
+      block.innerHTML = `
+        <div class="appointment-title"><span>${escapeHtml(item.title)}</span>${offset === 0 ? '<button class="edit-appointment" type="button">Edit</button>' : ""}</div>
+        <span class="appointment-time">${minutesToTime(start)} – ${minutesToTime(start + item.durationSlots * SLOT_MINUTES)}</span>
+        <span class="appointment-meta">${recurrenceText}${recurrenceText && item.notes ? " · " : ""}${item.notes ? escapeHtml(item.notes) : ""}</span>
+        ${offset === daySpan - 1 ? '<div class="block-resize-handle" title="Drag down for duration and sideways for days"></div>' : ""}
+      `;
+      block.querySelector(".edit-appointment")?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        showBlockModal(item);
+      });
+      block.addEventListener("pointerdown", (event) => {
+        if (event.target.closest(".edit-appointment")) return;
+        if (event.target.closest(".block-resize-handle")) {
+          beginBlockResize(event, item);
+        } else {
+          beginBlockMove(event, item, block);
+        }
+      });
+      column.appendChild(block);
+    }
   }
 
   let activeDrag = null;
@@ -720,6 +792,7 @@
     preview.innerHTML = `
       <div class="appointment-title"><span>${escapeHtml(item.title)}</span></div>
       <span class="appointment-time"></span>
+      <span class="appointment-meta">${Number(item.daySpan) > 1 ? `${item.daySpan} days` : ""}</span>
     `;
     return preview;
   }
@@ -785,6 +858,25 @@
     updateSnapPreview(event);
   }
 
+  function beginBlockResize(event, item) {
+    event.preventDefault();
+    event.stopPropagation();
+    const gridRect = elements.scheduleGrid.getBoundingClientRect();
+    activeDrag = {
+      type: "resize-block",
+      blockId: item.id,
+      startX: event.clientX,
+      startY: event.clientY,
+      columnWidth: gridRect.width / DAYS.length,
+      originalDuration: item.durationSlots,
+      originalDaySpan: Number(item.daySpan) || 1,
+      previewDuration: item.durationSlots,
+      previewDaySpan: Number(item.daySpan) || 1
+    };
+    document.addEventListener("pointermove", globalPointerMove);
+    document.addEventListener("pointerup", globalPointerUp, { once: true });
+  }
+
   function beginResize(event, appointment, block) {
     event.preventDefault();
     event.stopPropagation();
@@ -804,6 +896,32 @@
 
   function globalPointerMove(event) {
     if (!activeDrag) return;
+
+    if (activeDrag.type === "resize-block") {
+      const item = state.blocks.find((block) => block.id === activeDrag.blockId);
+      if (!item) return;
+      const slotDelta = Math.round((event.clientY - activeDrag.startY) / SLOT_HEIGHT);
+      const dayDelta = Math.round((event.clientX - activeDrag.startX) / activeDrag.columnWidth);
+      activeDrag.previewDuration = clamp(
+        activeDrag.originalDuration + slotDelta,
+        1,
+        TOTAL_SLOTS - item.startSlot
+      );
+      activeDrag.previewDaySpan = clamp(
+        activeDrag.originalDaySpan + dayDelta,
+        1,
+        DAYS.length - item.dayIndex
+      );
+      elements.scheduleGrid
+        .querySelectorAll(`.calendar-block[data-block-id="${item.id}"]`)
+        .forEach((block) => {
+          block.style.height = `${activeDrag.previewDuration * SLOT_HEIGHT - 6}px`;
+          const startMinutes = item.startSlot * SLOT_MINUTES;
+          block.querySelector(".appointment-time").textContent =
+            `${minutesToTime(startMinutes)} – ${minutesToTime(startMinutes + activeDrag.previewDuration * SLOT_MINUTES)} · ${activeDrag.previewDaySpan} ${activeDrag.previewDaySpan === 1 ? "day" : "days"}`;
+        });
+      return;
+    }
 
     if (activeDrag.type === "resize") {
       const appointment = state.appointments.find(
@@ -845,7 +963,11 @@
       return;
     }
 
-    const dayIndex = Number(column.dataset.dayIndex);
+    let dayIndex = Number(column.dataset.dayIndex);
+    if (activeDrag.type === "move-block") {
+      const movingBlock = state.blocks.find((item) => item.id === activeDrag.blockId);
+      dayIndex = Math.min(dayIndex, DAYS.length - (Number(movingBlock?.daySpan) || 1));
+    }
     const rect = column.getBoundingClientRect();
     const offset = activeDrag.type === "move-appointment" || activeDrag.type === "move-block"
       ? activeDrag.pointerOffsetY
@@ -886,6 +1008,19 @@
     document.removeEventListener("pointermove", globalPointerMove);
 
     if (!activeDrag) return;
+
+    if (activeDrag.type === "resize-block") {
+      const item = state.blocks.find((block) => block.id === activeDrag.blockId);
+      if (item) {
+        item.durationSlots = activeDrag.previewDuration;
+        item.daySpan = activeDrag.previewDaySpan;
+        saveState();
+        showToast(`Blocked time updated to ${item.daySpan} ${item.daySpan === 1 ? "day" : "days"}.`);
+      }
+      activeDrag = null;
+      render();
+      return;
+    }
 
     if (activeDrag.type === "resize") {
       const appointment = state.appointments.find(
@@ -1098,17 +1233,30 @@
     }).join("");
   }
 
+  function updateBlockDaySpanOptions(selected = 1) {
+    const dayIndex = Number(elements.blockDayInput.value) || 0;
+    const maximum = DAYS.length - dayIndex;
+    elements.blockDaySpanInput.innerHTML = Array.from({ length: maximum }, (_, index) => {
+      const days = index + 1;
+      return `<option value="${days}">${days} ${days === 1 ? "day" : "days"}</option>`;
+    }).join("");
+    elements.blockDaySpanInput.value = String(Math.min(Number(selected) || 1, maximum));
+  }
+
   function showBlockModal(item = null) {
     populateBlockOptions();
     elements.blockForm.dataset.blockId = item?.id || "";
     elements.blockTitleInput.value = item?.title || "Billing";
     elements.blockDayInput.value = String(item?.dayIndex ?? 0);
+    updateBlockDaySpanOptions(item?.daySpan ?? 1);
     elements.blockStartInput.value = String(item?.startSlot ?? 10);
     elements.blockDurationInput.value = String(item?.durationSlots ?? 2);
     elements.blockNotesInput.value = item?.notes || "";
-    elements.blockRepeatInput.value = item?.recurrence === "weekly" ? "weekly" : "none";
+    elements.blockRepeatInput.value = ["daily", "weekly"].includes(item?.recurrence)
+      ? item.recurrence
+      : "none";
     elements.blockRepeatCountInput.value = String(item?.recurrenceCount || 4);
-    updateRepeatVisibility(elements.blockRepeatInput, elements.blockRepeatCountLabel);
+    updateBlockRepeatControls();
     elements.deleteBlockBtn.classList.toggle("hidden", !item);
     elements.blockModal.classList.remove("hidden");
     elements.blockTitleInput.focus();
@@ -1122,7 +1270,10 @@
       const actual = Number(item.actualMinutes);
       return sum + (Number.isFinite(actual) ? actual : item.durationSlots * SLOT_MINUTES);
     }, 0) / 60;
-    const blockHours = blocks.reduce((sum, item) => sum + item.durationSlots * SLOT_MINUTES, 0) / 60;
+    const blockHours = blocks.reduce(
+      (sum, item) => sum + item.durationSlots * SLOT_MINUTES * (Number(item.daySpan) || 1),
+      0
+    ) / 60;
     const targetSessions = appointments.filter((item) => item.targetsMet).length;
 
     elements.summaryWeekLabel.textContent = formatWeekRange();
@@ -1235,8 +1386,9 @@
   elements.sessionRepeatInput.addEventListener("change", () =>
     updateRepeatVisibility(elements.sessionRepeatInput, elements.sessionRepeatCountLabel)
   );
-  elements.blockRepeatInput.addEventListener("change", () =>
-    updateRepeatVisibility(elements.blockRepeatInput, elements.blockRepeatCountLabel)
+  elements.blockRepeatInput.addEventListener("change", updateBlockRepeatControls);
+  elements.blockDayInput.addEventListener("change", () =>
+    updateBlockDaySpanOptions(elements.blockDaySpanInput.value)
   );
   elements.closeModalBtn.addEventListener("click", hideModal);
   elements.cancelModalBtn.addEventListener("click", hideModal);
@@ -1320,6 +1472,7 @@
       dayIndex: Number(elements.blockDayInput.value),
       startSlot: Number(elements.blockStartInput.value),
       durationSlots: Number(elements.blockDurationInput.value),
+      daySpan: Number(elements.blockDaySpanInput.value) || 1,
       notes: elements.blockNotesInput.value.trim()
     };
     if (existing >= 0) state.blocks[existing] = record;
@@ -1331,6 +1484,14 @@
         elements.blockRepeatCountInput.value,
         "block"
       );
+    } else if (elements.blockRepeatInput.value === "daily") {
+      createDailyBlockRecurrences(
+        existing >= 0 ? state.blocks[existing] : record,
+        elements.blockRepeatCountInput.value
+      );
+    } else {
+      record.recurrence = "none";
+      record.recurrenceCount = undefined;
     }
     saveState();
     hideDetailModals();

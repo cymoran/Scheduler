@@ -11,8 +11,8 @@
   --text: #12233f;
   --muted: #61718a;
   --surface: #ffffff;
-  --sidebar-width: 320px;
-  --time-column-width: 84px;
+  --sidebar-width: 280px;
+  --time-column-width: 64px;
   --header-height: 52px;
   --slot-height: 36px;
   --radius: 14px;
@@ -59,7 +59,7 @@ button:disabled {
 .app-shell {
   display: flex;
   flex-direction: column;
-  width: min(1600px, calc(100% - 24px));
+  width: min(1280px, calc(100% - 24px));
   min-height: 100vh;
   min-height: 100dvh;
   height: auto;
@@ -263,7 +263,7 @@ button:disabled {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(760px, 1fr) var(--sidebar-width);
+  grid-template-columns: minmax(620px, 1fr) var(--sidebar-width);
   height: auto;
   min-height: calc(var(--header-height) + var(--slot-height) * 22);
   flex: 0 0 auto;
@@ -364,9 +364,9 @@ button:disabled {
 
 .calendar {
   display: grid;
-  grid-template-columns: var(--time-column-width) minmax(820px, 1fr);
+  grid-template-columns: var(--time-column-width) minmax(560px, 1fr);
   grid-template-rows: var(--header-height) auto;
-  min-width: 904px;
+  min-width: 624px;
   position: relative;
 }
 
@@ -391,7 +391,7 @@ button:disabled {
   top: 0;
   z-index: 7;
   display: grid;
-  grid-template-columns: repeat(5, minmax(164px, 1fr));
+  grid-template-columns: repeat(5, minmax(112px, 1fr));
   height: var(--header-height);
   background: #f7fbff;
   border-bottom: 1px solid var(--blue-200);
@@ -434,7 +434,7 @@ button:disabled {
 .schedule-grid {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(5, minmax(164px, 1fr));
+  grid-template-columns: repeat(5, minmax(112px, 1fr));
   background:
     repeating-linear-gradient(
       to bottom,
@@ -566,6 +566,35 @@ button:disabled {
   color: #334155;
   cursor: pointer;
   z-index: 4;
+}
+
+.block-resize-handle {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+}
+
+.block-resize-handle::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid rgba(51, 65, 85, 0.55);
+  border-bottom: 2px solid rgba(51, 65, 85, 0.55);
+  border-radius: 0 0 2px;
+}
+
+.calendar-block[data-block-id] {
+  transition: height 80ms ease, box-shadow 120ms ease;
+}
+
+.calendar-block[data-block-id]:hover {
+  box-shadow: 0 9px 22px rgba(51, 65, 85, 0.18);
 }
 
 .resize-handle {
@@ -1541,6 +1570,35 @@ button:disabled {
 
 .hidden {
   display: none !important;
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    padding: 8px 10px;
+  }
+
+  .brand p {
+    display: none;
+  }
+
+  .top-actions {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .action-group {
+    padding: 5px 5px 4px;
+  }
+
+  .action-group .button {
+    min-height: 30px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  .week-heading {
+    min-width: 0;
+  }
 }
 
 @media (max-width: 1080px) {

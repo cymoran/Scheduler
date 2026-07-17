@@ -102,6 +102,7 @@
           <strong>How to use</strong>
           <p>Drag a client card over the calendar. The preview snaps to each 30-minute slot, similar to a modern calendar application.</p>
           <p>Move scheduled blocks by dragging them. Resize a block with the handle along its bottom edge.</p>
+          <p>For blocked time, drag the lower-right corner down to add time or sideways to cover more weekdays.</p>
         </div>
       </aside>
     </main>
@@ -180,22 +181,24 @@
         <label>Day<select id="blockDayInput"></select></label>
         <label>Start time<select id="blockStartInput"></select></label>
         <label>Duration<select id="blockDurationInput"></select></label>
+        <label>Days covered<select id="blockDaySpanInput"></select></label>
       </div>
       <label>Notes<textarea id="blockNotesInput" rows="3" maxlength="1000" placeholder="Optional details..."></textarea></label>
       <div class="recurrence-panel">
         <div>
           <strong>Repeat blocked time</strong>
-          <span>Reserve this slot across future weeks.</span>
+          <span>Repeat this slot on weekdays or across future weeks.</span>
         </div>
         <div class="recurrence-controls">
           <select id="blockRepeatInput" aria-label="Blocked time recurrence">
             <option value="none">Does not repeat</option>
+            <option value="daily">Daily (weekdays)</option>
             <option value="weekly">Weekly</option>
           </select>
           <label class="repeat-count-label hidden" id="blockRepeatCountLabel">
             For
             <input id="blockRepeatCountInput" type="number" min="2" max="52" value="4" />
-            weeks
+            <span id="blockRepeatUnit">weeks</span>
           </label>
         </div>
       </div>

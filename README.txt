@@ -27,6 +27,10 @@ SESSION TRACKING
 - Drag blocked-time items between days and times just like client sessions.
 - Client sessions and blocked time can repeat weekly for 2 to 52 weeks. Open
   the item's details, choose Weekly, and select the total number of weeks.
+- Blocked time can also repeat daily across 2 to 30 weekdays.
+- Drag the lower-right corner of blocked time vertically to change its duration
+  and horizontally to cover the same time across adjacent weekdays. The editor
+  also provides a Days covered field for precise changes.
 - Repeated client sessions keep the schedule and RBT assignment, but each
   future session starts with blank actual-time and clinical-note fields.
 
