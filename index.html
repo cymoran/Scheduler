@@ -31,15 +31,24 @@
       </div>
 
       <div class="top-actions">
-        <div class="action-group">
-          <span class="action-group-label">Review</span>
-          <button id="weeklySummaryBtn" class="button secondary">Weekly summary</button>
+        <button id="weeklySummaryBtn" class="button secondary compact-button">Weekly summary</button>
+        <div class="split-action">
+          <button id="scheduleCreatorBtn" class="button optimizer-button">Create schedule</button>
+          <button id="scheduleMenuBtn" class="button optimizer-button menu-toggle" type="button" aria-label="Schedule options" aria-expanded="false">▾</button>
+          <div id="scheduleMenu" class="action-menu hidden">
+            <button id="optimizerSettingsBtn" type="button">
+              <strong>Optimizer settings</strong>
+              <span>Adjust hours, duration, spacing, and priority</span>
+            </button>
+          </div>
         </div>
-        <div class="action-group">
-          <span class="action-group-label">Create</span>
-          <button id="manageRulesBtn" class="button secondary">Rules</button>
-          <button id="addBlockBtn" class="button secondary">+ Block time</button>
-          <button id="addClientBtn" class="button primary">+ Add client</button>
+        <div class="dropdown-action">
+          <button id="addMenuBtn" class="button primary" type="button" aria-expanded="false">+ Add <span aria-hidden="true">▾</span></button>
+          <div id="addMenu" class="action-menu action-menu-right hidden">
+            <button id="addClientBtn" type="button"><strong>Client</strong><span>Add goals and availability</span></button>
+            <button id="addBlockBtn" type="button"><strong>Blocked time</strong><span>Reserve admin, meetings, or time off</span></button>
+            <button id="manageRulesBtn" type="button"><strong>Service rules</strong><span>Manage appointment types and targets</span></button>
+          </div>
         </div>
         <button id="clearScheduleBtn" class="button danger-ghost compact-button" title="Remove everything from the displayed week">Clear</button>
       </div>
@@ -50,7 +59,7 @@
         <div class="calendar-toolbar">
           <div>
             <strong>Weekly calendar</strong>
-            <span>30-minute scheduling increments</span>
+          <span>15-minute scheduling increments</span>
           </div>
           <div class="calendar-key">
             <span><i class="key-dot block"></i>Blocked time</span>
@@ -100,7 +109,7 @@
 
         <div class="help-card">
           <strong>How to use</strong>
-          <p>Drag a client card over the calendar. The preview snaps to each 30-minute slot, similar to a modern calendar application.</p>
+          <p>Drag a client card over the calendar. The preview snaps to each 15-minute mark, similar to a modern calendar application.</p>
           <p>Move scheduled blocks by dragging them. Resize a block with the handle along its bottom edge.</p>
           <p>For blocked time, drag the lower-right corner down to add time or sideways to cover more weekdays.</p>
         </div>
@@ -291,6 +300,95 @@
         <button id="closeRulesBtn" type="button" class="button primary">Done</button>
       </div>
     </section>
+  </div>
+
+  <div id="optimizerModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="optimizerModalTitle">
+    <form id="optimizerForm" class="modal detail-modal optimizer-modal">
+      <div class="modal-header">
+        <div>
+          <h2 id="optimizerModalTitle">Create an optimized schedule</h2>
+          <p>Fill unmet client goals while respecting availability, blocked time, and the preferences below.</p>
+        </div>
+        <button id="closeOptimizerModalBtn" type="button" class="icon-button" aria-label="Close">×</button>
+      </div>
+
+      <div class="optimizer-section">
+        <div class="optimizer-section-heading">
+          <strong>Working hours</strong>
+          <span>Sessions will stay inside this window.</span>
+        </div>
+        <div class="form-grid">
+          <label>Not before<input id="optimizerStartTime" type="time" min="07:00" max="18:00" step="900" value="08:00" required /></label>
+          <label>Not after<input id="optimizerEndTime" type="time" min="07:00" max="18:00" step="900" value="17:00" required /></label>
+        </div>
+      </div>
+
+      <div class="optimizer-section">
+        <div class="optimizer-section-heading">
+          <strong>Session spacing</strong>
+          <span>Control session length and transition time between different clients.</span>
+        </div>
+        <div class="optimizer-preference-grid">
+          <label>Minimum session
+            <select id="optimizerMinDuration">
+              <option value="15">15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="60" selected>1 hour</option>
+              <option value="90">1.5 hours</option>
+              <option value="120">2 hours</option>
+            </select>
+          </label>
+          <label>Maximum session
+            <select id="optimizerMaxDuration">
+              <option value="60">1 hour</option>
+              <option value="90">1.5 hours</option>
+              <option value="120" selected>2 hours</option>
+              <option value="180">3 hours</option>
+              <option value="240">4 hours</option>
+            </select>
+          </label>
+          <label>Between clients
+            <select id="optimizerGap">
+              <option value="0">No minimum</option>
+              <option value="15" selected>15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="60">1 hour</option>
+            </select>
+          </label>
+        </div>
+        <p class="optimizer-hint">The optimizer always leaves at least 15 minutes before scheduling the same client again, so separate sessions cannot appear back-to-back.</p>
+      </div>
+
+      <div class="optimizer-section">
+        <div class="optimizer-section-heading">
+          <strong>If every goal cannot fit</strong>
+          <span>Choose which work should be placed first.</span>
+        </div>
+        <label>Priority
+          <select id="optimizerPriority">
+            <option value="balanced">Balanced across all clients</option>
+            <option value="largest">Clients with the most hours remaining</option>
+          </select>
+        </label>
+        <label id="optimizerPriorityClientLabel" class="hidden">Priority client
+          <select id="optimizerPriorityClient"></select>
+        </label>
+        <label class="checkbox-label optimizer-checkbox">
+          <input id="optimizerUsePriorityClient" type="checkbox" />
+          Schedule one selected client before the others
+        </label>
+        <label class="checkbox-label optimizer-checkbox">
+          <input id="optimizerReplaceGenerated" type="checkbox" checked />
+          Replace sessions previously created by this tool
+        </label>
+      </div>
+
+      <div id="optimizerResult" class="optimizer-result hidden" role="status"></div>
+      <div class="modal-actions">
+        <button id="cancelOptimizerModalBtn" type="button" class="button secondary">Cancel</button>
+        <button type="submit" class="button primary">Build this week</button>
+      </div>
+    </form>
   </div>
 
   <div id="toast" class="toast hidden" role="status"></div>

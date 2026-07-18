@@ -3,8 +3,8 @@
 
   const START_HOUR = 7;
   const END_HOUR = 18;
-  const SLOT_MINUTES = 30;
-  const SLOT_HEIGHT = 36;
+  const SLOT_MINUTES = 15;
+  const SLOT_HEIGHT = 22;
   const TOTAL_SLOTS = ((END_HOUR - START_HOUR) * 60) / SLOT_MINUTES;
   const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
   const STORAGE_KEY = "abaSchedulerPrototypeV1";
@@ -37,7 +37,8 @@
     blocks: [],
     rules: [],
     view: "week",
-    lastWeekStart: startOfWeek(new Date())
+    lastWeekStart: startOfWeek(new Date()),
+    optimizerSettings: null
   };
 
   const elements = {
@@ -117,7 +118,28 @@
     ruleNameInput: document.querySelector("#ruleNameInput"),
     ruleColorInput: document.querySelector("#ruleColorInput"),
     rulesList: document.querySelector("#rulesList"),
-    clientHoverPopup: document.querySelector("#clientHoverPopup")
+    clientHoverPopup: document.querySelector("#clientHoverPopup"),
+    scheduleCreatorBtn: document.querySelector("#scheduleCreatorBtn"),
+    scheduleMenuBtn: document.querySelector("#scheduleMenuBtn"),
+    scheduleMenu: document.querySelector("#scheduleMenu"),
+    optimizerSettingsBtn: document.querySelector("#optimizerSettingsBtn"),
+    addMenuBtn: document.querySelector("#addMenuBtn"),
+    addMenu: document.querySelector("#addMenu"),
+    optimizerModal: document.querySelector("#optimizerModal"),
+    optimizerForm: document.querySelector("#optimizerForm"),
+    closeOptimizerModalBtn: document.querySelector("#closeOptimizerModalBtn"),
+    cancelOptimizerModalBtn: document.querySelector("#cancelOptimizerModalBtn"),
+    optimizerStartTime: document.querySelector("#optimizerStartTime"),
+    optimizerEndTime: document.querySelector("#optimizerEndTime"),
+    optimizerMinDuration: document.querySelector("#optimizerMinDuration"),
+    optimizerMaxDuration: document.querySelector("#optimizerMaxDuration"),
+    optimizerGap: document.querySelector("#optimizerGap"),
+    optimizerPriority: document.querySelector("#optimizerPriority"),
+    optimizerUsePriorityClient: document.querySelector("#optimizerUsePriorityClient"),
+    optimizerPriorityClientLabel: document.querySelector("#optimizerPriorityClientLabel"),
+    optimizerPriorityClient: document.querySelector("#optimizerPriorityClient"),
+    optimizerReplaceGenerated: document.querySelector("#optimizerReplaceGenerated"),
+    optimizerResult: document.querySelector("#optimizerResult")
   };
 
   function startOfWeek(date) {
@@ -275,8 +297,14 @@
     return `${hour12}:${String(minute).padStart(2, "0")} ${suffix}`;
   }
 
+  function minutesToHourLabel(minutesFromStart) {
+    const totalMinutes = START_HOUR * 60 + minutesFromStart;
+    const hour24 = Math.floor(totalMinutes / 60);
+    return `${hour24 % 12 || 12} ${hour24 >= 12 ? "PM" : "AM"}`;
+  }
+
   function formatHours(hours) {
-    return Number.isInteger(hours) ? String(hours) : hours.toFixed(1);
+    return Number.isInteger(hours) ? String(hours) : String(Number(hours.toFixed(2)));
   }
 
   function loadState() {
@@ -290,6 +318,9 @@
           ? saved.rules
           : [{ id: "rule-legacy-service", name: "Client service", color: "blue" }];
         state.view = saved.view === "month" ? "month" : "week";
+        state.optimizerSettings = saved.optimizerSettings && typeof saved.optimizerSettings === "object"
+          ? saved.optimizerSettings
+          : null;
         state.lastWeekStart = saved.lastWeekStart
           ? new Date(`${saved.lastWeekStart}T00:00:00`)
           : saved.weekStart
@@ -307,9 +338,20 @@
         state.appointments.forEach((appointment) => {
           if (!appointment.ruleId) appointment.ruleId = fallbackRuleId;
         });
+        const savedSlotMinutes = Number(saved.slotMinutes) || 30;
+        let migratedSlots = false;
+        if (savedSlotMinutes !== SLOT_MINUTES) {
+          const slotRatio = savedSlotMinutes / SLOT_MINUTES;
+          [...state.appointments, ...state.blocks].forEach((item) => {
+            item.startSlot = Math.round(Number(item.startSlot || 0) * slotRatio);
+            item.durationSlots = Math.max(1, Math.round(Number(item.durationSlots || 1) * slotRatio));
+          });
+          migratedSlots = true;
+        }
         if (saved.weekStart) {
           state.weekStart = new Date(`${saved.weekStart}T00:00:00`);
         }
+        if (migratedSlots) saveState();
         return;
       }
     } catch (error) {
@@ -333,7 +375,9 @@
         blocks: state.blocks,
         rules: state.rules,
         view: state.view,
-        lastWeekStart: dateKey(state.lastWeekStart)
+        lastWeekStart: dateKey(state.lastWeekStart),
+        slotMinutes: SLOT_MINUTES,
+        optimizerSettings: state.optimizerSettings
       })
     );
   }
@@ -392,6 +436,7 @@
     elements.addBlockBtn.disabled = state.view === "month";
     elements.clearScheduleBtn.disabled = state.view === "month";
     elements.weeklySummaryBtn.disabled = state.view === "month";
+    elements.scheduleCreatorBtn.disabled = state.view === "month";
     elements.addBlockBtn.title = state.view === "month" ? "Open a week before adding blocked time" : "";
     if (state.view === "week") {
       renderTimeLabels();
@@ -416,7 +461,10 @@
       const header = document.createElement("div");
       header.className = "day-header";
       if (dateKey(date) === today) header.classList.add("today");
-      header.textContent = `${dayName} ${formatMonthDay(date)}`;
+      header.innerHTML = `
+        <span class="day-name">${dayName}</span>
+        <span class="day-date">${formatMonthDay(date)}</span>
+      `;
       elements.dayHeaders.appendChild(header);
     });
   }
@@ -479,8 +527,10 @@
       const label = document.createElement("div");
       const minutes = slot * SLOT_MINUTES;
       const isHour = minutes % 60 === 0;
-      label.className = `time-label${isHour ? " on-hour" : ""}`;
-      label.textContent = minutesToTime(minutes);
+      const isHalfHour = minutes % 30 === 0;
+      label.className = `time-label${isHour ? " on-hour" : isHalfHour ? " on-half-hour" : " on-quarter-hour"}`;
+      label.textContent = isHour ? minutesToHourLabel(minutes) : "";
+      label.title = minutesToTime(minutes);
       elements.timeLabels.appendChild(label);
     }
   }
@@ -696,7 +746,9 @@
     if (!column || !client) return;
 
     const block = document.createElement("div");
-    block.className = `appointment color-${client.color}`;
+    const isCompact = appointment.durationSlots === 1;
+    const isShort = appointment.durationSlots <= 2;
+    block.className = `appointment color-${client.color}${isShort ? " short-appointment" : ""}${isCompact ? " compact-appointment" : ""}`;
     block.dataset.appointmentId = appointment.id;
     block.style.top = `${appointment.startSlot * SLOT_HEIGHT + 3}px`;
     block.style.height = `${appointment.durationSlots * SLOT_HEIGHT - 6}px`;
@@ -706,8 +758,9 @@
 
     block.innerHTML = `
       <div class="appointment-title">
-        <span>${escapeHtml(client.name)}</span>
-        <button class="edit-appointment" type="button" title="Open session details">Notes</button>
+        <span class="appointment-name">${escapeHtml(client.name)}</span>
+        ${isShort ? `<span class="compact-service">${rule ? escapeHtml(rule.name) : "Uncategorized"}</span>` : ""}
+        <button class="edit-appointment" type="button" title="Open session details" aria-label="Open session details">•••</button>
       </div>
       <span class="appointment-time">${minutesToTime(startMinutes)} – ${minutesToTime(endMinutes)}</span>
       <span class="appointment-service">${rule ? escapeHtml(rule.name) : "Uncategorized"}</span>
@@ -799,7 +852,7 @@
 
   function beginClientDrag(event, client) {
     event.preventDefault();
-    const durationSlots = 2;
+    const durationSlots = 4;
 
     activeDrag = {
       type: "new-client",
@@ -1012,10 +1065,20 @@
     if (activeDrag.type === "resize-block") {
       const item = state.blocks.find((block) => block.id === activeDrag.blockId);
       if (item) {
-        item.durationSlots = activeDrag.previewDuration;
-        item.daySpan = activeDrag.previewDaySpan;
-        saveState();
-        showToast(`Blocked time updated to ${item.daySpan} ${item.daySpan === 1 ? "day" : "days"}.`);
+        if (isCalendarPlacementFree({
+          dayIndex: item.dayIndex,
+          startSlot: item.startSlot,
+          durationSlots: activeDrag.previewDuration,
+          daySpan: activeDrag.previewDaySpan,
+          ignoreBlockId: item.id
+        })) {
+          item.durationSlots = activeDrag.previewDuration;
+          item.daySpan = activeDrag.previewDaySpan;
+          saveState();
+          showToast(`Blocked time updated to ${item.daySpan} ${item.daySpan === 1 ? "day" : "days"}.`);
+        } else {
+          showToast("That size would overlap another item, so the block was restored.");
+        }
       }
       activeDrag = null;
       render();
@@ -1027,9 +1090,18 @@
         (item) => item.id === activeDrag.appointmentId
       );
       if (appointment) {
-        appointment.durationSlots = activeDrag.previewDuration;
-        saveState();
-        showToast("Appointment duration updated.");
+        if (isCalendarPlacementFree({
+          dayIndex: appointment.dayIndex,
+          startSlot: appointment.startSlot,
+          durationSlots: activeDrag.previewDuration,
+          ignoreAppointmentId: appointment.id
+        })) {
+          appointment.durationSlots = activeDrag.previewDuration;
+          saveState();
+          showToast("Appointment duration updated.");
+        } else {
+          showToast("That duration would overlap another item, so it was restored.");
+        }
       }
       activeDrag = null;
       render();
@@ -1042,20 +1114,27 @@
 
       if (activeDrag.type === "new-client") {
         const client = state.clients.find((item) => item.id === activeDrag.clientId);
-        if (client?.availability?.[activeDrag.dayIndex] === false) {
-          showToast(`${client.name} is not available on ${DAYS[activeDrag.dayIndex]}.`);
+        const opening = findNearestCalendarOpening({
+          dayIndex: activeDrag.dayIndex,
+          startSlot: activeDrag.startSlot,
+          durationSlots: activeDrag.durationSlots,
+          client
+        });
+        if (!opening) {
+          showToast(`No open time remains for ${client.name} after that point.`);
         } else {
           appointmentToEdit = {
             id: makeId(),
             clientId: activeDrag.clientId,
             weekKey,
-            dayIndex: activeDrag.dayIndex,
-            startSlot: activeDrag.startSlot,
+            dayIndex: opening.dayIndex,
+            startSlot: opening.startSlot,
             durationSlots: activeDrag.durationSlots,
             ruleId: state.rules[0]?.id || ""
           };
           state.appointments.push(appointmentToEdit);
-          showToast("Client added to the schedule.");
+          const bounced = opening.dayIndex !== activeDrag.dayIndex || opening.startSlot !== activeDrag.startSlot;
+          showToast(bounced ? "That time was occupied, so the client moved to the next opening." : "Client added to the schedule.");
         }
       }
 
@@ -1065,13 +1144,21 @@
         );
         if (appointment) {
           const client = state.clients.find((item) => item.id === appointment.clientId);
-          if (client?.availability?.[activeDrag.dayIndex] === false) {
-            showToast(`${client.name} is not available on ${DAYS[activeDrag.dayIndex]}.`);
+          const opening = findNearestCalendarOpening({
+            dayIndex: activeDrag.dayIndex,
+            startSlot: activeDrag.startSlot,
+            durationSlots: appointment.durationSlots,
+            client,
+            ignoreAppointmentId: appointment.id
+          });
+          if (!opening) {
+            showToast(`No open time remains for ${client.name} after that point.`);
           } else {
             appointment.weekKey = weekKey;
-            appointment.dayIndex = activeDrag.dayIndex;
-            appointment.startSlot = activeDrag.startSlot;
-            showToast("Appointment moved.");
+            appointment.dayIndex = opening.dayIndex;
+            appointment.startSlot = opening.startSlot;
+            const bounced = opening.dayIndex !== activeDrag.dayIndex || opening.startSlot !== activeDrag.startSlot;
+            showToast(bounced ? "That time was occupied, so the appointment moved to the next opening." : "Appointment moved.");
           }
         }
       }
@@ -1079,10 +1166,22 @@
       if (activeDrag.type === "move-block") {
         const block = state.blocks.find((item) => item.id === activeDrag.blockId);
         if (block) {
-          block.weekKey = weekKey;
-          block.dayIndex = activeDrag.dayIndex;
-          block.startSlot = activeDrag.startSlot;
-          showToast("Blocked time moved.");
+          const opening = findNearestCalendarOpening({
+            dayIndex: activeDrag.dayIndex,
+            startSlot: activeDrag.startSlot,
+            durationSlots: block.durationSlots,
+            daySpan: Number(block.daySpan) || 1,
+            ignoreBlockId: block.id
+          });
+          if (!opening) {
+            showToast("No open space remains for that block after this point.");
+          } else {
+            block.weekKey = weekKey;
+            block.dayIndex = opening.dayIndex;
+            block.startSlot = opening.startSlot;
+            const bounced = opening.dayIndex !== activeDrag.dayIndex || opening.startSlot !== activeDrag.startSlot;
+            showToast(bounced ? "That space was occupied, so the block moved to the next opening." : "Blocked time moved.");
+          }
         }
       }
 
@@ -1106,6 +1205,386 @@
 
   function clamp(value, minimum, maximum) {
     return Math.min(maximum, Math.max(minimum, value));
+  }
+
+  function timeValueToSlot(value) {
+    const [hours, minutes] = value.split(":").map(Number);
+    return Math.round(((hours - START_HOUR) * 60 + minutes) / SLOT_MINUTES);
+  }
+
+  function slotToTimeValue(slot) {
+    const totalMinutes = START_HOUR * 60 + Number(slot || 0) * SLOT_MINUTES;
+    return `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(totalMinutes % 60).padStart(2, "0")}`;
+  }
+
+  function showOptimizerModal() {
+    const settings = state.optimizerSettings || defaultOptimizerSettings();
+    elements.optimizerStartTime.value = slotToTimeValue(settings.startSlot);
+    elements.optimizerEndTime.value = slotToTimeValue(settings.endSlot);
+    elements.optimizerMinDuration.value = String(settings.minMinutes);
+    elements.optimizerMaxDuration.value = String(settings.maxMinutes);
+    elements.optimizerGap.value = String(settings.gapMinutes);
+    elements.optimizerPriority.value = settings.priority || "balanced";
+    elements.optimizerUsePriorityClient.checked = Boolean(settings.usePriorityClient);
+    elements.optimizerPriorityClient.innerHTML = state.clients
+      .map((client) => `<option value="${client.id}">${escapeHtml(client.name)}</option>`)
+      .join("");
+    elements.optimizerPriorityClient.value = settings.priorityClientId || state.clients[0]?.id || "";
+    elements.optimizerUsePriorityClient.disabled = state.clients.length === 0;
+    elements.optimizerPriorityClientLabel.classList.toggle(
+      "hidden",
+      !elements.optimizerUsePriorityClient.checked
+    );
+    elements.optimizerResult.classList.add("hidden");
+    elements.optimizerModal.classList.remove("hidden");
+  }
+
+  function hideOptimizerModal() {
+    elements.optimizerModal.classList.add("hidden");
+  }
+
+  function closeActionMenus() {
+    elements.addMenu.classList.add("hidden");
+    elements.scheduleMenu.classList.add("hidden");
+    elements.addMenuBtn.setAttribute("aria-expanded", "false");
+    elements.scheduleMenuBtn.setAttribute("aria-expanded", "false");
+  }
+
+  function toggleActionMenu(menu, button) {
+    const shouldOpen = menu.classList.contains("hidden");
+    closeActionMenus();
+    if (shouldOpen) {
+      menu.classList.remove("hidden");
+      button.setAttribute("aria-expanded", "true");
+    }
+  }
+
+  function intervalsOverlap(startA, durationA, startB, durationB) {
+    return startA < startB + durationB && startB < startA + durationA;
+  }
+
+  function isCalendarPlacementFree({
+    dayIndex,
+    startSlot,
+    durationSlots,
+    daySpan = 1,
+    ignoreAppointmentId = "",
+    ignoreBlockId = ""
+  }) {
+    const weekKey = dateKey(startOfWeek(state.weekStart));
+    const lastDay = dayIndex + daySpan - 1;
+    if (dayIndex < 0 || lastDay >= DAYS.length || startSlot < 0 || startSlot + durationSlots > TOTAL_SLOTS) {
+      return false;
+    }
+
+    const hitsAppointment = state.appointments.some((item) =>
+      item.id !== ignoreAppointmentId &&
+      item.weekKey === weekKey &&
+      item.dayIndex >= dayIndex &&
+      item.dayIndex <= lastDay &&
+      intervalsOverlap(startSlot, durationSlots, item.startSlot, item.durationSlots)
+    );
+    if (hitsAppointment) return false;
+
+    return !state.blocks.some((item) => {
+      if (item.id === ignoreBlockId || item.weekKey !== weekKey) return false;
+      const itemLastDay = item.dayIndex + (Number(item.daySpan) || 1) - 1;
+      const daysOverlap = dayIndex <= itemLastDay && item.dayIndex <= lastDay;
+      return daysOverlap && intervalsOverlap(startSlot, durationSlots, item.startSlot, item.durationSlots);
+    });
+  }
+
+  function getCalendarPlacementConflicts({
+    dayIndex,
+    startSlot,
+    durationSlots,
+    daySpan = 1,
+    ignoreAppointmentId = "",
+    ignoreBlockId = ""
+  }) {
+    const weekKey = dateKey(startOfWeek(state.weekStart));
+    const lastDay = dayIndex + daySpan - 1;
+    const conflicts = [];
+
+    state.appointments.forEach((item) => {
+      if (
+        item.id !== ignoreAppointmentId &&
+        item.weekKey === weekKey &&
+        item.dayIndex >= dayIndex &&
+        item.dayIndex <= lastDay &&
+        intervalsOverlap(startSlot, durationSlots, item.startSlot, item.durationSlots)
+      ) {
+        conflicts.push(item);
+      }
+    });
+
+    state.blocks.forEach((item) => {
+      if (item.id === ignoreBlockId || item.weekKey !== weekKey) return;
+      const itemLastDay = item.dayIndex + (Number(item.daySpan) || 1) - 1;
+      const daysOverlap = dayIndex <= itemLastDay && item.dayIndex <= lastDay;
+      if (daysOverlap && intervalsOverlap(startSlot, durationSlots, item.startSlot, item.durationSlots)) {
+        conflicts.push(item);
+      }
+    });
+    return conflicts;
+  }
+
+  function findNearestCalendarOpening({
+    dayIndex,
+    startSlot,
+    durationSlots,
+    daySpan = 1,
+    client = null,
+    ignoreAppointmentId = "",
+    ignoreBlockId = ""
+  }) {
+    const placementIsFree = (candidateDay, candidateSlot) =>
+      (client?.availability?.[candidateDay] !== false) &&
+      isCalendarPlacementFree({
+        dayIndex: candidateDay,
+        startSlot: candidateSlot,
+        durationSlots,
+        daySpan,
+        ignoreAppointmentId,
+        ignoreBlockId
+      });
+
+    if (placementIsFree(dayIndex, startSlot)) return { dayIndex, startSlot };
+
+    const conflicts = getCalendarPlacementConflicts({
+      dayIndex,
+      startSlot,
+      durationSlots,
+      daySpan,
+      ignoreAppointmentId,
+      ignoreBlockId
+    });
+    const draggedCenter = startSlot + durationSlots / 2;
+    const closestConflict = conflicts.sort((a, b) => {
+      const overlapA = Math.min(startSlot + durationSlots, a.startSlot + a.durationSlots) - Math.max(startSlot, a.startSlot);
+      const overlapB = Math.min(startSlot + durationSlots, b.startSlot + b.durationSlots) - Math.max(startSlot, b.startSlot);
+      return overlapB - overlapA;
+    })[0];
+    const conflictCenter = closestConflict
+      ? closestConflict.startSlot + closestConflict.durationSlots / 2
+      : draggedCenter;
+    const preferredDirection = draggedCenter < conflictCenter ? -1 : 1;
+    const maxStart = TOTAL_SLOTS - durationSlots;
+
+    const searchDay = (candidateDay, direction, origin) => {
+      if (candidateDay < 0 || candidateDay > DAYS.length - daySpan) return null;
+      if (client?.availability?.[candidateDay] === false) return null;
+      for (
+        let candidateSlot = clamp(origin, 0, maxStart);
+        candidateSlot >= 0 && candidateSlot <= maxStart;
+        candidateSlot += direction
+      ) {
+        if (placementIsFree(candidateDay, candidateSlot)) {
+          return { dayIndex: candidateDay, startSlot: candidateSlot };
+        }
+      }
+      return null;
+    };
+
+    const preferredSameDay = searchDay(dayIndex, preferredDirection, startSlot + preferredDirection);
+    if (preferredSameDay) return preferredSameDay;
+    const oppositeSameDay = searchDay(dayIndex, -preferredDirection, startSlot - preferredDirection);
+    if (oppositeSameDay) return oppositeSameDay;
+
+    const dayDirections = preferredDirection > 0 ? [1, -1] : [-1, 1];
+    for (const dayDirection of dayDirections) {
+      for (
+        let candidateDay = dayIndex + dayDirection;
+        candidateDay >= 0 && candidateDay <= DAYS.length - daySpan;
+        candidateDay += dayDirection
+      ) {
+        const opening = searchDay(
+          candidateDay,
+          dayDirection,
+          dayDirection > 0 ? 0 : maxStart
+        );
+        if (opening) return opening;
+      }
+    }
+    return null;
+  }
+
+  function buildOptimizedSchedule(settings) {
+    const weekKey = dateKey(startOfWeek(state.weekStart));
+    if (settings.replaceGenerated) {
+      state.appointments = state.appointments.filter(
+        (item) => item.weekKey !== weekKey || item.createdBy !== "optimizer"
+      );
+    }
+
+    const appointments = state.appointments.filter((item) => item.weekKey === weekKey);
+    const blocks = state.blocks.filter((item) => item.weekKey === weekKey);
+    const gapSlots = Math.ceil(settings.gapMinutes / SLOT_MINUTES);
+    const minSlots = Math.ceil(settings.minMinutes / SLOT_MINUTES);
+    const maxSlots = Math.floor(settings.maxMinutes / SLOT_MINUTES);
+    const created = [];
+
+    const needs = [];
+    state.clients.forEach((client, clientOrder) => {
+      state.rules.forEach((rule, ruleOrder) => {
+        const remainingMinutes = Math.max(
+          0,
+          Math.round((getClientTarget(client, rule.id) - getScheduledHours(client.id, rule.id, weekKey)) * 60)
+        );
+        if (remainingMinutes > 0) {
+          needs.push({ client, rule, remainingSlots: Math.ceil(remainingMinutes / SLOT_MINUTES), clientOrder, ruleOrder });
+        }
+      });
+    });
+
+    const priorityId = settings.usePriorityClient ? settings.priorityClientId : "";
+    needs.sort((a, b) => {
+      if ((a.client.id === priorityId) !== (b.client.id === priorityId)) return a.client.id === priorityId ? -1 : 1;
+      if (settings.priority === "largest" && b.remainingSlots !== a.remainingSlots) {
+        return b.remainingSlots - a.remainingSlots;
+      }
+      return a.clientOrder - b.clientOrder || a.ruleOrder - b.ruleOrder;
+    });
+
+    const canPlace = (need, dayIndex, startSlot, durationSlots) => {
+      if (need.client.availability?.[dayIndex] === false) return false;
+      if (startSlot < settings.startSlot || startSlot + durationSlots > settings.endSlot) return false;
+      if (blocks.some((block) => {
+        const coversDay = dayIndex >= block.dayIndex && dayIndex < block.dayIndex + (Number(block.daySpan) || 1);
+        return coversDay && intervalsOverlap(startSlot, durationSlots, block.startSlot, block.durationSlots);
+      })) return false;
+      return !appointments.concat(created).some((item) => {
+        if (item.dayIndex !== dayIndex) return false;
+        if (intervalsOverlap(startSlot, durationSlots, item.startSlot, item.durationSlots)) return true;
+        const requiredGap = item.clientId === need.client.id ? 1 : gapSlots;
+        if (requiredGap === 0) return false;
+        return startSlot < item.startSlot + item.durationSlots + requiredGap &&
+          item.startSlot < startSlot + durationSlots + requiredGap;
+      });
+    };
+
+    const getDayLoad = (dayIndex) => {
+      const dayAppointments = appointments.concat(created).filter((item) => item.dayIndex === dayIndex);
+      const dayBlocks = blocks.filter(
+        (block) => dayIndex >= block.dayIndex && dayIndex < block.dayIndex + (Number(block.daySpan) || 1)
+      );
+      return {
+        itemCount: dayAppointments.length + dayBlocks.length,
+        occupiedSlots:
+          dayAppointments.reduce((sum, item) => sum + item.durationSlots, 0) +
+          dayBlocks.reduce((sum, item) => sum + item.durationSlots, 0)
+      };
+    };
+
+    let progress = true;
+    while (progress && needs.some((need) => need.remainingSlots > 0)) {
+      progress = false;
+      for (const need of needs) {
+        if (need.remainingSlots <= 0) continue;
+        if (need.remainingSlots < minSlots) continue;
+        let desired = Math.min(maxSlots, need.remainingSlots);
+        let placement = null;
+
+        for (let duration = desired; duration >= Math.min(minSlots, desired) && !placement; duration -= 1) {
+          const candidates = [];
+          for (let dayIndex = 0; dayIndex < DAYS.length; dayIndex += 1) {
+            const load = getDayLoad(dayIndex);
+            for (let startSlot = settings.startSlot; startSlot + duration <= settings.endSlot; startSlot += 1) {
+              if (canPlace(need, dayIndex, startSlot, duration)) {
+                candidates.push({
+                  dayIndex,
+                  startSlot,
+                  durationSlots: duration,
+                  itemCount: load.itemCount,
+                  occupiedSlots: load.occupiedSlots,
+                  variation: Math.random()
+                });
+              }
+            }
+          }
+          candidates.sort((a, b) =>
+            a.itemCount - b.itemCount ||
+            a.occupiedSlots - b.occupiedSlots ||
+            a.variation - b.variation
+          );
+          if (candidates.length) {
+            const bestCount = candidates[0].itemCount;
+            const bestOccupied = candidates[0].occupiedSlots;
+            const equallyBalanced = candidates.filter(
+              (candidate) =>
+                candidate.itemCount === bestCount &&
+                candidate.occupiedSlots === bestOccupied
+            );
+            placement = equallyBalanced[Math.floor(Math.random() * equallyBalanced.length)];
+          }
+        }
+
+        if (placement) {
+          created.push({
+            id: makeId(),
+            clientId: need.client.id,
+            ruleId: need.rule.id,
+            weekKey,
+            ...placement,
+            createdBy: "optimizer"
+          });
+          need.remainingSlots -= placement.durationSlots;
+          progress = true;
+        }
+      }
+    }
+
+    state.appointments.push(...created);
+    const unscheduledSlots = needs.reduce((sum, need) => sum + Math.max(0, need.remainingSlots), 0);
+    return { created, unscheduledSlots };
+  }
+
+  function defaultOptimizerSettings() {
+    return {
+      startSlot: timeValueToSlot("08:00"),
+      endSlot: timeValueToSlot("17:00"),
+      minMinutes: 60,
+      maxMinutes: 120,
+      gapMinutes: 15,
+      priority: "balanced",
+      usePriorityClient: false,
+      priorityClientId: "",
+      replaceGenerated: true
+    };
+  }
+
+  function allCurrentTargetsMet() {
+    const weekKey = dateKey(startOfWeek(state.weekStart));
+    const hasTargets = state.clients.some((client) => getClientTarget(client) > 0);
+    return hasTargets && state.clients.every((client) =>
+      state.rules.every((rule) =>
+        getScheduledHours(client.id, rule.id, weekKey) + 0.001 >= getClientTarget(client, rule.id)
+      )
+    );
+  }
+
+  function runSavedOptimizer() {
+    closeActionMenus();
+    if (allCurrentTargetsMet() &&
+        !confirm("The current schedule already meets every client target. Create a different valid combination anyway?")) {
+      showToast("Kept the current schedule.");
+      return;
+    }
+    const result = buildOptimizedSchedule({
+      ...(state.optimizerSettings || defaultOptimizerSettings()),
+      replaceGenerated: true
+    });
+    saveState();
+    render();
+    const scheduledHours = result.created.reduce((sum, item) => sum + item.durationSlots, 0) * SLOT_MINUTES / 60;
+    const remainingHours = result.unscheduledSlots * SLOT_MINUTES / 60;
+    if (result.created.length === 0 && remainingHours === 0) {
+      showToast("All client goals are already met.");
+    } else if (remainingHours > 0) {
+      showToast(`Added ${result.created.length} sessions; ${formatHours(remainingHours)} hours could not fit.`);
+    } else {
+      showToast(`Created ${result.created.length} sessions covering ${formatHours(scheduledHours)} hours.`);
+    }
   }
 
   function showModal(client = null) {
@@ -1227,7 +1706,7 @@
     elements.blockStartInput.innerHTML = Array.from({ length: TOTAL_SLOTS }, (_, slot) =>
       `<option value="${slot}">${minutesToTime(slot * SLOT_MINUTES)}</option>`
     ).join("");
-    elements.blockDurationInput.innerHTML = Array.from({ length: 12 }, (_, index) => {
+    elements.blockDurationInput.innerHTML = Array.from({ length: 24 }, (_, index) => {
       const slots = index + 1;
       return `<option value="${slots}">${formatHours(slots * SLOT_MINUTES / 60)} hours</option>`;
     }).join("");
@@ -1249,8 +1728,8 @@
     elements.blockTitleInput.value = item?.title || "Billing";
     elements.blockDayInput.value = String(item?.dayIndex ?? 0);
     updateBlockDaySpanOptions(item?.daySpan ?? 1);
-    elements.blockStartInput.value = String(item?.startSlot ?? 10);
-    elements.blockDurationInput.value = String(item?.durationSlots ?? 2);
+    elements.blockStartInput.value = String(item?.startSlot ?? timeValueToSlot("12:00"));
+    elements.blockDurationInput.value = String(item?.durationSlots ?? 4);
     elements.blockNotesInput.value = item?.notes || "";
     elements.blockRepeatInput.value = ["daily", "weekly"].includes(item?.recurrence)
       ? item.recurrence
@@ -1358,8 +1837,27 @@
     render();
   });
 
-  elements.addClientBtn.addEventListener("click", () => showModal());
-  elements.manageRulesBtn.addEventListener("click", showRulesModal);
+  elements.addMenuBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    toggleActionMenu(elements.addMenu, elements.addMenuBtn);
+  });
+  elements.scheduleMenuBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    toggleActionMenu(elements.scheduleMenu, elements.scheduleMenuBtn);
+  });
+  elements.scheduleCreatorBtn.addEventListener("click", runSavedOptimizer);
+  elements.optimizerSettingsBtn.addEventListener("click", () => {
+    closeActionMenus();
+    showOptimizerModal();
+  });
+  elements.addClientBtn.addEventListener("click", () => {
+    closeActionMenus();
+    showModal();
+  });
+  elements.manageRulesBtn.addEventListener("click", () => {
+    closeActionMenus();
+    showRulesModal();
+  });
   elements.weekViewBtn.addEventListener("click", () => {
     state.weekStart = new Date(state.lastWeekStart);
     state.view = "week";
@@ -1373,8 +1871,70 @@
     saveState();
     render();
   });
-  elements.addBlockBtn.addEventListener("click", () => showBlockModal());
+  elements.addBlockBtn.addEventListener("click", () => {
+    closeActionMenus();
+    showBlockModal();
+  });
   elements.weeklySummaryBtn.addEventListener("click", showWeeklySummary);
+  elements.optimizerUsePriorityClient.addEventListener("change", () => {
+    elements.optimizerPriorityClientLabel.classList.toggle(
+      "hidden",
+      !elements.optimizerUsePriorityClient.checked
+    );
+  });
+  elements.closeOptimizerModalBtn.addEventListener("click", hideOptimizerModal);
+  elements.cancelOptimizerModalBtn.addEventListener("click", hideOptimizerModal);
+  elements.optimizerModal.addEventListener("click", (event) => {
+    if (event.target === elements.optimizerModal) hideOptimizerModal();
+  });
+  elements.optimizerForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const startSlot = timeValueToSlot(elements.optimizerStartTime.value);
+    const endSlot = timeValueToSlot(elements.optimizerEndTime.value);
+    const minMinutes = Number(elements.optimizerMinDuration.value);
+    const maxMinutes = Number(elements.optimizerMaxDuration.value);
+
+    if (endSlot <= startSlot) {
+      elements.optimizerResult.textContent = "The ending time must be later than the starting time.";
+      elements.optimizerResult.className = "optimizer-result partial";
+      return;
+    }
+    if (maxMinutes < minMinutes) {
+      elements.optimizerResult.textContent = "Maximum session length must be at least the minimum session length.";
+      elements.optimizerResult.className = "optimizer-result partial";
+      return;
+    }
+
+    const settings = {
+      startSlot,
+      endSlot,
+      minMinutes,
+      maxMinutes,
+      gapMinutes: Number(elements.optimizerGap.value),
+      priority: elements.optimizerPriority.value,
+      usePriorityClient: elements.optimizerUsePriorityClient.checked,
+      priorityClientId: elements.optimizerPriorityClient.value,
+      replaceGenerated: elements.optimizerReplaceGenerated.checked
+    };
+    state.optimizerSettings = settings;
+    const result = buildOptimizedSchedule(settings);
+    saveState();
+    render();
+
+    const scheduledHours = result.created.reduce((sum, item) => sum + item.durationSlots, 0) * SLOT_MINUTES / 60;
+    const remainingHours = result.unscheduledSlots * SLOT_MINUTES / 60;
+    elements.optimizerResult.className = `optimizer-result${remainingHours ? " partial" : ""}`;
+    if (result.created.length === 0 && remainingHours === 0) {
+      elements.optimizerResult.textContent = "All client goals for this week are already met.";
+    } else if (remainingHours > 0) {
+      elements.optimizerResult.textContent =
+        `Added ${result.created.length} sessions (${formatHours(scheduledHours)} hours). ` +
+        `${formatHours(remainingHours)} goal hours could not fit with these preferences. Try a wider time window, a shorter minimum session, or a smaller transition gap.`;
+    } else {
+      elements.optimizerResult.textContent =
+        `Schedule created: ${result.created.length} sessions covering ${formatHours(scheduledHours)} hours. All remaining goals fit.`;
+    }
+  });
   elements.sessionNotesInput.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
@@ -1557,6 +2117,9 @@
   });
 
   elements.clientSearch.addEventListener("input", renderClients);
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".dropdown-action, .split-action")) closeActionMenus();
+  });
 
   elements.clearScheduleBtn.addEventListener("click", () => {
     const currentWeekKey = dateKey(startOfWeek(state.weekStart));
@@ -1584,6 +2147,7 @@
     if (event.key === "Escape") {
       if (!elements.clientModal.classList.contains("hidden")) hideModal();
       if (!elements.rulesModal.classList.contains("hidden")) hideRulesModal();
+      if (!elements.optimizerModal.classList.contains("hidden")) hideOptimizerModal();
       hideDetailModals();
       cleanupDrag();
       render();
