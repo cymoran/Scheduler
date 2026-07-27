@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ABA Weekly Scheduler Prototype</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">▣</div>
+        <div>
+          <h1>Schedule</h1>
+          <p>ABA weekly scheduling prototype</p>
+        </div>
+      </div>
+
+      <div class="week-controls">
+        <button id="todayBtn" class="button secondary">Today</button>
+        <button id="previousWeekBtn" class="icon-button" aria-label="Previous week">‹</button>
+        <div class="week-heading">
+          <div class="view-switch" aria-label="Calendar view">
+            <button id="weekViewBtn" class="view-option active" type="button">Week</button>
+            <button id="monthViewBtn" class="view-option" type="button">Month</button>
+          </div>
+          <div id="weekLabel" class="week-label"></div>
+        </div>
+        <button id="nextWeekBtn" class="icon-button" aria-label="Next week">›</button>
+      </div>
+
+      <div class="top-actions">
+        <button id="weeklySummaryBtn" class="button secondary compact-button">Weekly summary</button>
+        <div class="split-action">
+          <button id="scheduleCreatorBtn" class="button optimizer-button">Create new schedule</button>
+          <button id="scheduleMenuBtn" class="button optimizer-button menu-toggle" type="button" aria-label="Schedule options" aria-expanded="false">▾</button>
+          <div id="scheduleMenu" class="action-menu hidden">
+            <button id="optimizerSettingsBtn" type="button">
+              <strong>Optimizer settings</strong>
+              <span>Adjust hours, duration, spacing, and priority</span>
+            </button>
+          </div>
+        </div>
+        <div class="dropdown-action">
+          <button id="addMenuBtn" class="button primary" type="button" aria-expanded="false">+ Add <span aria-hidden="true">▾</span></button>
+          <div id="addMenu" class="action-menu action-menu-right hidden">
+            <button id="addClientBtn" type="button"><strong>Client</strong><span>Add goals and availability</span></button>
+            <button id="addBlockBtn" type="button"><strong>Blocked time</strong><span>Reserve admin, meetings, or time off</span></button>
+            <button id="manageRulesBtn" type="button"><strong>Service rules</strong><span>Manage appointment types and targets</span></button>
+          </div>
+        </div>
+        <button id="clearScheduleBtn" class="button danger-ghost compact-button" title="Remove everything from the displayed week">Clear</button>
+      </div>
+    </header>
+
+    <nav class="schedule-tabs" aria-label="Schedule views">
+      <button id="clinicScheduleTab" class="schedule-tab active" type="button">Clinic Schedule</button>
+      <button id="bcbaScheduleTab" class="schedule-tab" type="button">BCBA Schedule</button>
+      <button id="rbtScheduleTab" class="schedule-tab" type="button">RBT View</button>
+      <button id="clientScheduleTab" class="schedule-tab" type="button">Client View</button>
+    </nav>
+
+    <section id="clinicScheduleView" class="clinic-schedule-view">
+      <div class="clinic-view-header">
+        <div>
+          <p class="eyebrow">Shared operational view</p>
+          <h2>Clinic Schedule</h2>
+          <p>See coverage health at a glance, record RBT or client callouts, and rebalance exceptions from one daily hub.</p>
+        </div>
+        <div class="clinic-view-actions">
+          <label class="compact-field">
+            <span>Group</span>
+            <select id="clinicGroupFilter"><option value="all">All groups</option></select>
+          </label>
+          <label class="compact-field search-field">
+            <span>Find</span>
+            <input id="clinicSearch" type="search" placeholder="RBT or client" />
+          </label>
+          <button id="clinicOptimizeBtn" class="button primary" type="button">Optimize coverage</button>
+          <button id="clinicEditToggle" class="button secondary" type="button">Scheduler mode: Off</button>
+        </div>
+      </div>
+
+      <div class="clinic-health-strip">
+        <div><span>Clients covered</span><strong id="clinicCoveredCount">0 / 0</strong><small>AM and PM coverage</small></div>
+        <div><span>Total callouts</span><strong id="clinicCalloutCount">0</strong><small>RBTs and clients unavailable</small></div>
+        <div><span>Open assignments</span><strong id="clinicOpenCount">0</strong><small>Needs scheduler attention</small></div>
+        <div><span>Pairing warnings</span><strong id="clinicWarningCount">0</strong><small>Same RBT AM and PM</small></div>
+      </div>
+
+      <div class="clinic-visual-dashboard">
+        <section class="clinic-visual-card clinic-coverage-visual">
+          <div class="clinic-visual-heading"><div><span>Operational coverage</span><strong>Active client periods</strong></div><em id="clinicCoverageVisualStatus"></em></div>
+          <div class="clinic-coverage-layout"><div id="clinicCoverageVisualDonut" class="clinic-coverage-donut"><strong id="clinicCoverageVisualPercent">0%</strong></div><div id="clinicCoverageVisualLegend" class="clinic-visual-legend"></div></div>
+        </section>
+        <section class="clinic-visual-card">
+          <div class="clinic-visual-heading"><div><span>Coverage by group</span><strong>AM and PM staffing</strong></div></div>
+          <div id="clinicGroupCoverageBars" class="clinic-group-coverage-bars"></div>
+        </section>
+        <section class="clinic-visual-card clinic-callout-center">
+          <div class="clinic-visual-heading"><div><span>Callout center</span><strong>Update today’s availability</strong></div><em id="clinicTotalCallouts"></em></div>
+          <label class="clinic-callout-control"><span>Client</span><select id="clinicClientCalloutSelect"></select><button id="clinicClientCalloutBtn" type="button">Mark called out</button></label>
+          <label class="clinic-callout-control"><span>RBT</span><select id="clinicRbtCalloutSelect"></select><button id="clinicRbtCalloutBtn" type="button">Mark called out</button></label>
+          <div id="clinicActiveCallouts" class="clinic-active-callouts"></div>
+        </section>
+        <section class="clinic-visual-card clinic-idle-card">
+          <div class="clinic-visual-heading"><div><span>Available capacity</span><strong>RBTs without a client</strong></div><em id="clinicIdleCount"></em></div>
+          <div id="clinicIdleRbts" class="clinic-idle-rbts"></div>
+        </section>
+      </div>
+
+      <div class="clinic-exception-heading">
+        <div><p class="eyebrow">Action workspace</p><h3 id="clinicTableTitle">Exceptions requiring attention</h3><span id="clinicTableSubtitle">Callouts, open coverage, and repeat pairings appear here.</span></div>
+        <button id="clinicViewModeBtn" class="button secondary" type="button">Show all assignments</button>
+      </div>
+
+      <div class="clinic-layout">
+        <div id="clinicGroups" class="clinic-groups"></div>
+        <aside class="clinic-side-panel">
+          <div class="side-panel-card">
+            <div class="side-panel-heading"><h3>Today’s attention</h3><span id="clinicAlertBadge" class="count-badge">0</span></div>
+            <div id="clinicAlerts" class="clinic-alerts"></div>
+          </div>
+          <div class="side-panel-card permissions-card">
+            <h3>Shared visibility</h3>
+            <p>RBTs and BCBAs can see the complete published schedule so they know who is working with each client.</p>
+            <p><strong>Scheduler mode</strong> unlocks callout controls and assignment editing in this prototype.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="clientScheduleView" class="clinic-schedule-view client-operations-view hidden">
+      <div class="clinic-view-header">
+        <div>
+          <p class="eyebrow">Daily operational health</p>
+          <h2>Client Schedule</h2>
+          <p id="clientOpsDateLabel">A quick view of coverage, staffing risks, and client continuity for today.</p>
+        </div>
+        <div class="client-ops-actions">
+          <button id="clientOpsSummaryBtn" class="button primary" type="button">Summary</button>
+          <button id="clientOpsAssignmentsBtn" class="button secondary" type="button">Client assignments</button>
+          <button id="clientOpsOpenEditorBtn" class="button secondary" type="button">Open clinic editor</button>
+        </div>
+      </div>
+
+      <div id="clientOpsMetrics" class="client-ops-metrics"></div>
+      <div id="clientOpsSummaryPanel" class="client-ops-dashboard">
+        <section class="ops-chart-card ops-coverage-card">
+          <div class="ops-card-heading"><div><span>Coverage health</span><strong>Today’s assignments</strong></div><em id="clientOpsCoverageStatus"></em></div>
+          <div class="ops-donut-layout"><div id="clientOpsCoverageDonut" class="ops-donut"><span id="clientOpsCoveragePercent">0%</span></div><div id="clientOpsCoverageLegend" class="ops-legend"></div></div>
+        </section>
+        <section class="ops-chart-card">
+          <div class="ops-card-heading"><div><span>Group capacity</span><strong>Filled AM and PM slots</strong></div></div>
+          <div id="clientOpsGroupBars" class="ops-bar-list"></div>
+        </section>
+        <section class="ops-chart-card ops-attention-card">
+          <div class="ops-card-heading"><div><span>Needs attention</span><strong>Fastest operational wins</strong></div><em id="clientOpsAttentionCount"></em></div>
+          <div id="clientOpsAttention" class="ops-attention-list"></div>
+        </section>
+      </div>
+      <div id="clientOpsAssignmentsPanel" class="client-ops-assignment-grid hidden"></div>
+    </section>
+
+    <main id="bcbaScheduleView" class="workspace hidden">
+      <section class="calendar-panel">
+        <div class="calendar-toolbar">
+          <div>
+            <strong>Weekly calendar</strong>
+          <span>15-minute scheduling increments</span>
+          </div>
+          <div class="calendar-key">
+            <span><i class="key-dot block"></i>Blocked time</span>
+            <span><i class="key-dot under"></i>Under target</span>
+            <span><i class="key-dot met"></i>Target met</span>
+            <span><i class="key-dot over"></i>Over target</span>
+          </div>
+        </div>
+
+        <div id="weekView" class="calendar-scroll">
+          <div id="calendar" class="calendar" aria-label="Weekly calendar">
+            <div class="calendar-corner">Time</div>
+            <div id="dayHeaders" class="day-headers"></div>
+            <div id="timeLabels" class="time-labels"></div>
+            <div id="scheduleGrid" class="schedule-grid"></div>
+          </div>
+        </div>
+        <div id="monthView" class="month-view hidden" aria-label="Monthly client hour summary"></div>
+      </section>
+
+      <aside class="client-panel">
+        <div class="client-panel-header">
+          <div>
+            <h2>Clients</h2>
+            <p id="clientPanelHint">Drag a client onto the calendar.</p>
+          </div>
+          <span id="clientCount" class="count-badge">0</span>
+        </div>
+
+        <div class="hours-summary">
+          <div class="hours-summary-top">
+          <span id="periodSummaryLabel">Tracked this week</span>
+            <strong id="weeklyHoursText">0 / 0 hrs</strong>
+          </div>
+          <div class="summary-progress">
+            <div id="weeklyHoursFill" class="summary-progress-fill"></div>
+          </div>
+          <p id="weeklyHoursMessage">Add appointments to begin tracking hours.</p>
+          <div id="periodServiceSummary" class="period-service-summary"></div>
+        </div>
+
+        <label class="search-box">
+          <span>⌕</span>
+          <input id="clientSearch" type="search" placeholder="Search clients..." />
+        </label>
+
+        <div id="clientList" class="client-list"></div>
+
+        <div class="help-card">
+          <strong>How to use</strong>
+          <p>Hover over any 30-minute calendar segment and right-click to add a client session, blocked time, or custom item.</p>
+          <p>Drag a client card over the calendar. The preview snaps to each 15-minute mark, similar to a modern calendar application.</p>
+          <p>Move scheduled blocks by dragging them. Resize a block with the handle along its bottom edge.</p>
+          <p>For blocked time, drag the lower-right corner down to add time or sideways to cover more weekdays.</p>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div id="sessionModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="sessionModalTitle">
+    <form id="sessionForm" class="modal detail-modal">
+      <div class="modal-header">
+        <div>
+          <h2 id="sessionModalTitle">Session details</h2>
+          <p id="sessionModalSubtitle">Record what actually happened.</p>
+        </div>
+        <button id="closeSessionModalBtn" type="button" class="icon-button" aria-label="Close">×</button>
+      </div>
+      <input id="sessionIdInput" type="hidden" />
+      <div class="form-grid">
+        <label>
+          RBT identifier
+          <select id="sessionRbtSelect" aria-label="RBT identifier"></select>
+          <input id="sessionRbtCustomInput" class="hidden" maxlength="40" placeholder="Enter a custom RBT identifier" />
+        </label>
+        <label>
+          Actual time (minutes)
+          <input id="sessionActualMinutesInput" type="number" min="0" max="1440" step="1" />
+        </label>
+      </div>
+      <label>
+        Service / appointment type
+        <select id="sessionRuleInput"></select>
+      </label>
+      <div class="session-notes-editor">
+        <label for="sessionNotesInput">Session notes</label>
+        <p>Write continuously. Press Enter for a new note or bullet point.</p>
+        <textarea id="sessionNotesInput" rows="7" maxlength="4000" placeholder="Practiced transitions with fewer prompts&#10;Reviewed replacement communication target&#10;Caregiver reported improved morning routine"></textarea>
+      </div>
+      <label>
+        Billing / non-billable notes
+        <textarea id="sessionBillingNotesInput" rows="3" maxlength="1000" placeholder="Document interruptions or time that could not be billed..."></textarea>
+      </label>
+      <label class="checkbox-label">
+        <input id="sessionTargetsMetInput" type="checkbox" />
+        Targets for this session were met
+      </label>
+      <div class="recurrence-panel">
+        <div>
+          <strong>Repeat session</strong>
+          <span>Create this same time slot in future weeks.</span>
+        </div>
+        <div class="recurrence-controls">
+          <select id="sessionRepeatInput" aria-label="Session recurrence">
+            <option value="none">Does not repeat</option>
+            <option value="weekly">Weekly</option>
+          </select>
+          <label class="repeat-count-label hidden" id="sessionRepeatCountLabel">
+            For
+            <input id="sessionRepeatCountInput" type="number" min="2" max="52" value="4" />
+            weeks
+          </label>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="deleteSessionBtn" type="button" class="button danger-ghost">Delete session</button>
+        <button id="cancelSessionModalBtn" type="button" class="button secondary">Cancel</button>
+        <button type="submit" class="button primary">Save details</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="blockModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="blockModalTitle">
+    <form id="blockForm" class="modal">
+      <div class="modal-header">
+        <div><h2 id="blockModalTitle">Block time</h2><p>Reserve time for billing, admin, meetings, or anything else.</p></div>
+        <button id="closeBlockModalBtn" type="button" class="icon-button" aria-label="Close">×</button>
+      </div>
+      <label>Title<input id="blockTitleInput" required maxlength="60" value="Billing" /></label>
+      <div class="form-grid">
+        <label>Day<select id="blockDayInput"></select></label>
+        <label>Start time<select id="blockStartInput"></select></label>
+        <label>Duration<select id="blockDurationInput"></select></label>
+        <label>Days covered<select id="blockDaySpanInput"></select></label>
+      </div>
+      <label>Notes<textarea id="blockNotesInput" rows="3" maxlength="1000" placeholder="Optional details..."></textarea></label>
+      <div class="recurrence-panel">
+        <div>
+          <strong>Repeat blocked time</strong>
+          <span>Repeat this slot on weekdays or across future weeks.</span>
+        </div>
+        <div class="recurrence-controls">
+          <select id="blockRepeatInput" aria-label="Blocked time recurrence">
+            <option value="none">Does not repeat</option>
+            <option value="daily">Daily (weekdays)</option>
+            <option value="weekly">Weekly</option>
+          </select>
+          <label class="repeat-count-label hidden" id="blockRepeatCountLabel">
+            For
+            <input id="blockRepeatCountInput" type="number" min="2" max="52" value="4" />
+            <span id="blockRepeatUnit">weeks</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="deleteBlockBtn" type="button" class="button danger-ghost hidden">Delete block</button>
+        <button id="cancelBlockModalBtn" type="button" class="button secondary">Cancel</button>
+        <button type="submit" class="button primary">Save block</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="summaryModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="summaryModalTitle">
+    <section class="modal summary-modal">
+      <div class="modal-header">
+        <div><h2 id="summaryModalTitle">Weekly summary</h2><p id="summaryWeekLabel"></p></div>
+        <button id="closeSummaryModalBtn" type="button" class="icon-button" aria-label="Close">×</button>
+      </div>
+      <div id="summaryContent"></div>
+      <div class="modal-actions"><button id="closeSummaryBtn" type="button" class="button primary">Done</button></div>
+    </section>
+  </div>
+
+  <div id="clientModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="clientModalTitle">
+    <form id="clientForm" class="modal">
+      <div class="modal-header">
+        <div>
+          <h2 id="clientModalTitle">Add client</h2>
+          <p>Create a draggable client card.</p>
+        </div>
+        <button id="closeModalBtn" type="button" class="icon-button">×</button>
+      </div>
+
+      <label>
+        Client name
+        <input id="clientNameInput" required maxlength="40" placeholder="Example: Client A" />
+      </label>
+
+      <label>
+        Card color
+        <select id="clientColorInput">
+          <option value="blue">Blue</option>
+          <option value="purple">Purple</option>
+          <option value="green">Green</option>
+          <option value="yellow">Yellow</option>
+          <option value="pink">Pink</option>
+        </select>
+      </label>
+
+      <fieldset class="target-fieldset">
+        <legend>Service targets</legend>
+        <p>Set the hours and frequency for each service. Weekly tracking automatically converts biweekly and monthly targets into a weekly goal.</p>
+        <div id="clientTargetInputs" class="target-input-list"></div>
+      </fieldset>
+
+      <fieldset class="target-fieldset availability-fieldset">
+        <legend>Available weekdays</legend>
+        <p>Uncheck days when this client does not attend. The calendar will warn you and prevent scheduling on those days.</p>
+        <div id="clientAvailabilityInputs" class="weekday-checklist"></div>
+      </fieldset>
+
+      <div class="modal-actions">
+        <button id="cancelModalBtn" type="button" class="button secondary">Cancel</button>
+        <button id="saveClientBtn" type="submit" class="button primary">Add client</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="rulesModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="rulesModalTitle">
+    <section class="modal detail-modal">
+      <div class="modal-header">
+        <div>
+          <h2 id="rulesModalTitle">Service rules</h2>
+          <p>Create reusable appointment types, then set different hour targets for each client.</p>
+        </div>
+        <button id="closeRulesModalBtn" type="button" class="icon-button" aria-label="Close">×</button>
+      </div>
+      <form id="addRuleForm" class="rule-create-row">
+        <input id="ruleNameInput" required maxlength="50" placeholder="Example: Supervision" />
+        <select id="ruleColorInput" aria-label="Rule color">
+          <option value="blue">Blue</option>
+          <option value="purple">Purple</option>
+          <option value="green">Green</option>
+          <option value="yellow">Yellow</option>
+          <option value="pink">Pink</option>
+        </select>
+        <button class="button primary" type="submit">Add rule</button>
+      </form>
+      <div id="rulesList" class="rules-list"></div>
+      <div class="modal-actions">
+        <button id="closeRulesBtn" type="button" class="button primary">Done</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="optimizerModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="optimizerModalTitle">
+    <form id="optimizerForm" class="modal detail-modal optimizer-modal">
+      <div class="modal-header">
+        <div>
+          <h2 id="optimizerModalTitle">Create an optimized schedule</h2>
+          <p>Fill unmet client goals while respecting availability, blocked time, and the preferences below.</p>
+        </div>
+        <button id="closeOptimizerModalBtn" type="button" class="icon-button" aria-label="Close">×</button>
+      </div>
+
+      <div class="optimizer-section">
+        <div class="optimizer-section-heading">
+          <strong>Working hours</strong>
+          <span>Sessions will stay inside this window.</span>
+        </div>
+        <div class="form-grid">
+          <label>Not before<input id="optimizerStartTime" type="time" min="07:00" max="18:00" step="900" value="08:00" required /></label>
+          <label>Not after<input id="optimizerEndTime" type="time" min="07:00" max="18:00" step="900" value="17:00" required /></label>
+        </div>
+      </div>
+
+      <div class="optimizer-section">
+        <div class="optimizer-section-heading">
+          <strong>Session spacing</strong>
+          <span>Set defaults for every service or create service-specific session rules.</span>
+        </div>
+        <div id="optimizerSpacingList" class="optimizer-spacing-list"></div>
+        <div id="optimizerSpacingEditor" class="optimizer-spacing-editor">
+          <label>Service target
+            <select id="optimizerSpacingRule"></select>
+          </label>
+          <label>Minimum session
+            <select id="optimizerMinDuration">
+              <option value="15">15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="60" selected>1 hour</option>
+              <option value="90">1.5 hours</option>
+              <option value="120">2 hours</option>
+            </select>
+          </label>
+          <label>Maximum session
+            <select id="optimizerMaxDuration">
+              <option value="60">1 hour</option>
+              <option value="90">1.5 hours</option>
+              <option value="120" selected>2 hours</option>
+              <option value="180">3 hours</option>
+              <option value="240">4 hours</option>
+            </select>
+          </label>
+          <label>Between clients
+            <select id="optimizerGap">
+              <option value="0">No minimum</option>
+              <option value="15" selected>15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="60">1 hour</option>
+            </select>
+          </label>
+          <button id="addOptimizerSpacingBtn" class="optimizer-add-spacing" type="button" aria-label="Add session spacing rule" title="Add session spacing rule">+</button>
+        </div>
+        <button id="showOptimizerSpacingEditorBtn" class="optimizer-add-line hidden" type="button"><span>+</span><em>Add another session spacing rule</em></button>
+        <p class="optimizer-hint">Separate sessions for the same client are spread apart whenever another valid arrangement is available.</p>
+      </div>
+
+      <div class="optimizer-section">
+        <div class="optimizer-section-heading">
+          <strong>If every goal cannot fit</strong>
+          <span>Choose which work should be placed first.</span>
+        </div>
+        <label>Priority
+          <select id="optimizerPriority">
+            <option value="balanced">Balanced across all clients</option>
+            <option value="largest">Clients with the most hours remaining</option>
+          </select>
+        </label>
+        <label id="optimizerPriorityClientLabel" class="hidden">Priority client
+          <select id="optimizerPriorityClient"></select>
+        </label>
+        <label class="checkbox-label optimizer-checkbox">
+          <input id="optimizerUsePriorityClient" type="checkbox" />
+          Schedule one selected client before the others
+        </label>
+        <label class="checkbox-label optimizer-checkbox">
+          <input id="optimizerReplaceGenerated" type="checkbox" checked />
+          Replace sessions previously created by this tool
+        </label>
+      </div>
+
+      <div id="optimizerResult" class="optimizer-result hidden" role="status"></div>
+      <div class="modal-actions">
+        <button id="cancelOptimizerModalBtn" type="button" class="button secondary">Cancel</button>
+        <button type="submit" class="button primary">Build this week</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+  <div id="calendarContextMenu" class="calendar-context-menu hidden" role="menu" aria-label="Add calendar item">
+    <div class="calendar-context-heading"><span>Add at</span><strong id="calendarContextTime"></strong></div>
+    <button type="button" data-calendar-action="client"><span class="context-icon client">+</span><span><strong>Client session</strong><small>Choose a client for this 30-minute slot</small></span><b>›</b></button>
+    <div id="calendarContextClients" class="calendar-context-clients hidden"></div>
+    <button type="button" data-calendar-action="blocked"><span class="context-icon blocked">■</span><span><strong>Blocked time</strong><small>Reserve this time for admin or meetings</small></span></button>
+    <button type="button" data-calendar-action="custom"><span class="context-icon custom">◇</span><span><strong>Custom time</strong><small>Create and name any other calendar item</small></span></button>
+  </div>
+  <aside id="clientHoverPopup" class="client-hover-summary" role="dialog" aria-label="Client quick summary"></aside>
+
+  <script src="script.js"></script>
+</body>
+</html>

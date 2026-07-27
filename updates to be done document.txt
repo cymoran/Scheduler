@@ -1,0 +1,9 @@
+-See kid with both RBTs weekly
+	-Maybe add RBT identified for each time segment
+-Billing notes can be within +- 1 min and would nice to add note section to highlight when you had certain things you cant bill for
+-Add in Parent training stuff too
+-Need to start thinking about Hippa compliance
+-Have this connected with a "master client schedule" that can make kids out certain days
+-Maybe add option to have kids only be able to be scheduled for certain days
+-Add a summary slide expansion for each client that shows the weekly notes for each day. 
+-Think about adding a weekly summary thing to summarise the notes and show graphs and data. 
