@@ -1337,11 +1337,19 @@ button:disabled {
   display: grid;
   place-items: center;
   padding: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   background: rgba(8, 31, 65, 0.42);
 }
 
 .modal {
   width: min(460px, 100%);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 20px;
   border-radius: 16px;
   background: white;
@@ -1597,18 +1605,6 @@ button:disabled {
   background: white;
 }
 
-#sessionForm .modal-actions {
-  position: sticky;
-  bottom: -20px;
-  z-index: 3;
-  margin-right: -20px;
-  margin-left: -20px;
-  padding: 12px 20px 20px;
-  border-top: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.97);
-  box-shadow: 0 -8px 20px rgba(23, 75, 154, 0.07);
-}
-
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1679,6 +1675,7 @@ button:disabled {
 
 .summary-modal {
   max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   overflow-y: auto;
 }
 
@@ -2302,11 +2299,20 @@ button:disabled {
 }
 
 .modal-actions {
+  position: sticky;
+  bottom: -20px;
+  z-index: 3;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 9px;
   margin-top: 22px;
+  margin-right: -20px;
+  margin-left: -20px;
+  padding: 12px 20px 20px;
+  border-top: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 -8px 20px rgba(23, 75, 154, 0.07);
 }
 
 .toast {
