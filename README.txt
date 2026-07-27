@@ -50,9 +50,12 @@ MONTH VIEW
 - Month view shows one summary panel per week with each scheduled client,
   combined target progress, and an hour breakdown by service rule.
 - Select a week's heading to open that week in the detailed calendar.
+<<<<<<< HEAD
 - Weekly goals are scaled by each client's available in-month weekdays. Partial
   weeks receive only their proportional share, and every week's optimizer fills
   that share instead of pushing an accumulated monthly deficit to later weeks.
+=======
+>>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
 
 SMALL SCREENS
 - The full page scrolls normally when the browser is too short to display the
