@@ -24,17 +24,10 @@
   ];
 
   const defaultClients = [
-<<<<<<< HEAD
     { id: makeId(), name: "Client A", color: "blue", targets: { [DEFAULT_RULE_IDS.supervision]: 5, [DEFAULT_RULE_IDS.parentTraining]: 2 }, targetFrequencies: {}, availability: [true, true, true, true, true] },
     { id: makeId(), name: "Client B", color: "purple", targets: { [DEFAULT_RULE_IDS.supervision]: 4, [DEFAULT_RULE_IDS.parentTraining]: 1 }, targetFrequencies: {}, availability: [true, true, true, true, true] },
     { id: makeId(), name: "Client C", color: "green", targets: { [DEFAULT_RULE_IDS.supervision]: 6, [DEFAULT_RULE_IDS.parentTraining]: 2 }, targetFrequencies: {}, availability: [true, true, true, true, true] },
     { id: makeId(), name: "Client D", color: "yellow", targets: { [DEFAULT_RULE_IDS.supervision]: 3, [DEFAULT_RULE_IDS.parentTraining]: 1 }, targetFrequencies: {}, availability: [true, true, true, true, true] }
-=======
-    { id: makeId(), name: "Client A", color: "blue", targets: { [DEFAULT_RULE_IDS.supervision]: 5, [DEFAULT_RULE_IDS.parentTraining]: 2 }, availability: [true, true, true, true, true] },
-    { id: makeId(), name: "Client B", color: "purple", targets: { [DEFAULT_RULE_IDS.supervision]: 4, [DEFAULT_RULE_IDS.parentTraining]: 1 }, availability: [true, true, true, true, true] },
-    { id: makeId(), name: "Client C", color: "green", targets: { [DEFAULT_RULE_IDS.supervision]: 6, [DEFAULT_RULE_IDS.parentTraining]: 2 }, availability: [true, true, true, true, true] },
-    { id: makeId(), name: "Client D", color: "yellow", targets: { [DEFAULT_RULE_IDS.supervision]: 3, [DEFAULT_RULE_IDS.parentTraining]: 1 }, availability: [true, true, true, true, true] }
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
   ];
 
   const state = {
@@ -47,6 +40,7 @@
     lastWeekStart: startOfWeek(new Date()),
     optimizerSettings: null
   };
+  let monthHeatmapRuleId = "all";
 
   const elements = {
     weekLabel: document.querySelector("#weekLabel"),
@@ -55,19 +49,13 @@
     scheduleGrid: document.querySelector("#scheduleGrid"),
     clientList: document.querySelector("#clientList"),
     clientCount: document.querySelector("#clientCount"),
-<<<<<<< HEAD
     clientPanelHint: document.querySelector("#clientPanelHint"),
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     clientSearch: document.querySelector("#clientSearch"),
     weeklyHoursText: document.querySelector("#weeklyHoursText"),
     weeklyHoursFill: document.querySelector("#weeklyHoursFill"),
     weeklyHoursMessage: document.querySelector("#weeklyHoursMessage"),
-<<<<<<< HEAD
     periodSummaryLabel: document.querySelector("#periodSummaryLabel"),
     periodServiceSummary: document.querySelector("#periodServiceSummary"),
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     previousWeekBtn: document.querySelector("#previousWeekBtn"),
     nextWeekBtn: document.querySelector("#nextWeekBtn"),
     todayBtn: document.querySelector("#todayBtn"),
@@ -90,12 +78,8 @@
     sessionForm: document.querySelector("#sessionForm"),
     sessionIdInput: document.querySelector("#sessionIdInput"),
     sessionModalSubtitle: document.querySelector("#sessionModalSubtitle"),
-<<<<<<< HEAD
     sessionRbtSelect: document.querySelector("#sessionRbtSelect"),
     sessionRbtCustomInput: document.querySelector("#sessionRbtCustomInput"),
-=======
-    sessionRbtInput: document.querySelector("#sessionRbtInput"),
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     sessionActualMinutesInput: document.querySelector("#sessionActualMinutesInput"),
     sessionRuleInput: document.querySelector("#sessionRuleInput"),
     sessionNotesInput: document.querySelector("#sessionNotesInput"),
@@ -123,10 +107,7 @@
     cancelBlockModalBtn: document.querySelector("#cancelBlockModalBtn"),
     deleteBlockBtn: document.querySelector("#deleteBlockBtn"),
     summaryModal: document.querySelector("#summaryModal"),
-<<<<<<< HEAD
     summaryModalTitle: document.querySelector("#summaryModalTitle"),
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     summaryWeekLabel: document.querySelector("#summaryWeekLabel"),
     summaryContent: document.querySelector("#summaryContent"),
     closeSummaryModalBtn: document.querySelector("#closeSummaryModalBtn"),
@@ -156,14 +137,11 @@
     cancelOptimizerModalBtn: document.querySelector("#cancelOptimizerModalBtn"),
     optimizerStartTime: document.querySelector("#optimizerStartTime"),
     optimizerEndTime: document.querySelector("#optimizerEndTime"),
-<<<<<<< HEAD
     optimizerSpacingList: document.querySelector("#optimizerSpacingList"),
     optimizerSpacingEditor: document.querySelector("#optimizerSpacingEditor"),
     optimizerSpacingRule: document.querySelector("#optimizerSpacingRule"),
     addOptimizerSpacingBtn: document.querySelector("#addOptimizerSpacingBtn"),
     showOptimizerSpacingEditorBtn: document.querySelector("#showOptimizerSpacingEditorBtn"),
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     optimizerMinDuration: document.querySelector("#optimizerMinDuration"),
     optimizerMaxDuration: document.querySelector("#optimizerMaxDuration"),
     optimizerGap: document.querySelector("#optimizerGap"),
@@ -172,14 +150,10 @@
     optimizerPriorityClientLabel: document.querySelector("#optimizerPriorityClientLabel"),
     optimizerPriorityClient: document.querySelector("#optimizerPriorityClient"),
     optimizerReplaceGenerated: document.querySelector("#optimizerReplaceGenerated"),
-<<<<<<< HEAD
     optimizerResult: document.querySelector("#optimizerResult"),
     calendarContextMenu: document.querySelector("#calendarContextMenu"),
     calendarContextTime: document.querySelector("#calendarContextTime"),
     calendarContextClients: document.querySelector("#calendarContextClients")
-=======
-    optimizerResult: document.querySelector("#optimizerResult")
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
   };
 
   function startOfWeek(date) {
@@ -359,11 +333,7 @@
           : [{ id: "rule-legacy-service", name: "Client service", color: "blue" }];
         state.view = saved.view === "month" ? "month" : "week";
         state.optimizerSettings = saved.optimizerSettings && typeof saved.optimizerSettings === "object"
-<<<<<<< HEAD
           ? normalizeOptimizerSettings(saved.optimizerSettings)
-=======
-          ? saved.optimizerSettings
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
           : null;
         state.lastWeekStart = saved.lastWeekStart
           ? new Date(`${saved.lastWeekStart}T00:00:00`)
@@ -378,12 +348,9 @@
           if (!Array.isArray(client.availability) || client.availability.length !== DAYS.length) {
             client.availability = DAYS.map(() => true);
           }
-<<<<<<< HEAD
           if (!client.targetFrequencies || typeof client.targetFrequencies !== "object") {
             client.targetFrequencies = {};
           }
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
         });
         state.appointments.forEach((appointment) => {
           if (!appointment.ruleId) appointment.ruleId = fallbackRuleId;
@@ -451,7 +418,6 @@
     return (totalSlots * SLOT_MINUTES) / 60;
   }
 
-<<<<<<< HEAD
   function appointmentDate(appointment) {
     return addDays(dateFromKey(appointment.weekKey), Number(appointment.dayIndex) || 0);
   }
@@ -465,78 +431,35 @@
     });
   }
 
-  function monthKey(date) {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  function getMonthlyScheduledHours(clientId, ruleId = null, monthDate = state.weekStart) {
+    const slots = getMonthAppointments(monthDate)
+      .filter((appointment) => appointment.clientId === clientId && (!ruleId || appointment.ruleId === ruleId))
+      .reduce((sum, appointment) => sum + appointment.durationSlots, 0);
+    return slots * SLOT_MINUTES / 60;
   }
 
-  function clientServiceDaysInMonth(client, monthDate, notBefore = null) {
-    const year = monthDate.getFullYear();
-    const month = monthDate.getMonth();
-    const lastDay = new Date(year, month + 1, 0).getDate();
-    let count = 0;
-    for (let day = 1; day <= lastDay; day += 1) {
-      const date = new Date(year, month, day);
-      if (notBefore && date < notBefore) continue;
-      const weekdayIndex = date.getDay() - 1;
-      if (weekdayIndex >= 0 && weekdayIndex < DAYS.length && client.availability?.[weekdayIndex] !== false) count += 1;
-    }
-    return count;
-  }
-
-  function getWeekMonthSegments(weekStart = state.weekStart) {
-    const segments = new Map();
-    const normalizedWeekStart = startOfWeek(weekStart);
-    DAYS.forEach((_, dayIndex) => {
-      const date = addDays(normalizedWeekStart, dayIndex);
-      const key = monthKey(date);
-      if (!segments.has(key)) {
-        segments.set(key, {
-          key,
-          monthDate: new Date(date.getFullYear(), date.getMonth(), 1),
-          dates: []
-        });
-      }
-      segments.get(key).dates.push({ dayIndex, date });
-    });
-    return [...segments.values()];
-  }
-
-  function getProportionalWeekTarget(client, ruleId = null, weekStart = state.weekStart) {
-    if (!ruleId) {
-      return state.rules.reduce(
-        (sum, rule) => sum + getProportionalWeekTarget(client, rule.id, weekStart),
-        0
-      );
-    }
-
-    return getWeekMonthSegments(weekStart).reduce((sum, segment) => {
-      const availableSegmentDays = segment.dates.filter(
-        ({ dayIndex }) => client.availability?.[dayIndex] !== false
-      ).length;
-      const availableMonthDays = clientServiceDaysInMonth(client, segment.monthDate);
-      if (!availableSegmentDays || !availableMonthDays) return sum;
-      return sum + getMonthlyClientTarget(client, ruleId) * availableSegmentDays / availableMonthDays;
-    }, 0);
-  }
-
-  function getScheduledHoursForDays(clientId, ruleId, weekKey, dayIndexes) {
-    const includedDays = new Set(dayIndexes);
-    const slots = state.appointments
+  function getMonthWeekScheduledHours(clientId, weekKey, monthDate, ruleId = null) {
+    const slots = getMonthAppointments(monthDate)
       .filter((appointment) =>
         appointment.weekKey === weekKey &&
         appointment.clientId === clientId &&
-        includedDays.has(appointment.dayIndex) &&
         (!ruleId || appointment.ruleId === ruleId)
       )
       .reduce((sum, appointment) => sum + appointment.durationSlots, 0);
     return slots * SLOT_MINUTES / 60;
   }
 
-  function getMonthlyScheduledHours(clientId, ruleId = null, monthDate = state.weekStart) {
-    const slots = getMonthAppointments(monthDate)
-      .filter((appointment) => appointment.clientId === clientId && (!ruleId || appointment.ruleId === ruleId))
-      .reduce((sum, appointment) => sum + appointment.durationSlots, 0);
-    return slots * SLOT_MINUTES / 60;
+  function getMonthWeekTarget(client, weekKey, monthDate, ruleId = null) {
+    const weekStart = dateFromKey(weekKey);
+    const availableDays = DAYS
+      .map((_, dayIndex) => dayIndex)
+      .filter((dayIndex) => client.availability?.[dayIndex] !== false);
+    const inMonthDays = availableDays.filter((dayIndex) => {
+      const date = addDays(weekStart, dayIndex);
+      return date.getFullYear() === monthDate.getFullYear() && date.getMonth() === monthDate.getMonth();
+    });
+    if (!availableDays.length || !inMonthDays.length) return 0;
+    return getWeeklyClientTarget(client, ruleId) * inMonthDays.length / availableDays.length;
   }
 
   function getPeriodScheduledHours(clientId, ruleId = null) {
@@ -561,10 +484,14 @@
     return state.rules.reduce((sum, rule) => sum + getMonthlyClientTarget(client, rule.id), 0);
   }
 
+  function getWeeklyClientTarget(client, ruleId = null) {
+    return getClientTarget(client, ruleId);
+  }
+
   function getPeriodClientTarget(client, ruleId = null) {
     return state.view === "month"
       ? getMonthlyClientTarget(client, ruleId)
-      : getProportionalWeekTarget(client, ruleId);
+      : getWeeklyClientTarget(client, ruleId);
   }
 
   function getRawClientTarget(client, ruleId) {
@@ -577,11 +504,6 @@
 
   function frequencyLabel(frequency) {
     return frequency === "biweekly" ? "biweekly" : frequency === "monthly" ? "monthly" : "weekly";
-=======
-  function getClientTarget(client, ruleId = null) {
-    if (ruleId) return Number(client.targets?.[ruleId] || 0);
-    return Object.values(client.targets || {}).reduce((sum, value) => sum + Number(value || 0), 0);
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
   }
 
   function getRule(ruleId) {
@@ -613,12 +535,8 @@
     elements.monthViewBtn.classList.toggle("active", state.view === "month");
     elements.addBlockBtn.disabled = state.view === "month";
     elements.clearScheduleBtn.disabled = state.view === "month";
-<<<<<<< HEAD
     elements.weeklySummaryBtn.disabled = false;
     elements.weeklySummaryBtn.textContent = state.view === "month" ? "Monthly summary" : "Weekly summary";
-=======
-    elements.weeklySummaryBtn.disabled = state.view === "month";
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     elements.scheduleCreatorBtn.disabled = state.view === "month";
     elements.addBlockBtn.title = state.view === "month" ? "Open a week before adding blocked time" : "";
     if (state.view === "week") {
@@ -656,7 +574,14 @@
     elements.monthView.innerHTML = "";
     const monthDate = new Date(state.weekStart.getFullYear(), state.weekStart.getMonth(), 1);
     const lastOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
-<<<<<<< HEAD
+    const monthWeeks = [];
+    for (let week = startOfWeek(monthDate); week <= lastOfMonth; week = addDays(week, 7)) {
+      monthWeeks.push({
+        key: dateKey(week),
+        start: new Date(week),
+        end: addDays(week, 4)
+      });
+    }
     const monthAppointments = getMonthAppointments(monthDate);
     const scheduledHours = monthAppointments.reduce((sum, item) => sum + item.durationSlots * SLOT_MINUTES / 60, 0);
     const targetHours = state.clients.reduce((sum, client) => sum + getMonthlyClientTarget(client), 0);
@@ -664,6 +589,19 @@
       ruleSum + Math.min(getMonthlyScheduledHours(client.id, rule.id, monthDate), getMonthlyClientTarget(client, rule.id)), 0), 0);
     const completion = targetHours > 0 ? Math.round(creditedHours / targetHours * 100) : 0;
     const trackedClients = state.clients.filter((client) => getMonthlyClientTarget(client) > 0);
+    const heatmapRules = state.rules.filter((rule) =>
+      state.clients.some((client) => getMonthlyClientTarget(client, rule.id) > 0)
+    );
+    if (monthHeatmapRuleId !== "all" && !heatmapRules.some((rule) => rule.id === monthHeatmapRuleId)) {
+      monthHeatmapRuleId = "all";
+    }
+    const selectedHeatmapRule = heatmapRules.find((rule) => rule.id === monthHeatmapRuleId) || null;
+    const heatmapRuleId = selectedHeatmapRule?.id || null;
+    const heatmapScopeLabel = selectedHeatmapRule?.name || "all services";
+    const heatmapOptions = [
+      `<option value="all" ${monthHeatmapRuleId === "all" ? "selected" : ""}>All services</option>`,
+      ...heatmapRules.map((rule) => `<option value="${escapeHtml(rule.id)}" ${rule.id === monthHeatmapRuleId ? "selected" : ""}>${escapeHtml(rule.name)}</option>`)
+    ].join("");
     const onTrackClients = trackedClients.filter(
       (client) => getMonthlyScheduledHours(client.id, null, monthDate) + 0.001 >= getMonthlyClientTarget(client)
     ).length;
@@ -696,6 +634,55 @@
         <div class="month-service-clients">${clientRows}</div>
       </details>`;
     }).join("");
+    const heatmapRows = state.clients.map((client) => {
+      const cells = monthWeeks.map((week) => {
+        const scheduled = getMonthWeekScheduledHours(client.id, week.key, monthDate, heatmapRuleId);
+        const target = getMonthWeekTarget(client, week.key, monthDate, heatmapRuleId);
+        const percent = target > 0 ? scheduled / target * 100 : 0;
+        const heatLevel = scheduled <= 0 ? 0 : percent >= 100 ? 5 : percent >= 75 ? 4 : percent >= 50 ? 3 : percent >= 25 ? 2 : 1;
+        const displayPercent = Math.min(100, Math.max(0, Math.round(percent)));
+        const percentLabel = target > 0 ? `${displayPercent}%` : "No target";
+        return `<button class="month-heat-cell heat-${heatLevel}" type="button" data-week-key="${week.key}" aria-label="${escapeHtml(client.name)}, ${escapeHtml(heatmapScopeLabel)}, ${formatMonthDay(week.start)} to ${formatMonthDay(week.end)}: ${formatHours(scheduled)} hours, ${percentLabel}">
+          <strong>${formatHours(scheduled)}h</strong><span>${percentLabel}</span>
+        </button>`;
+      }).join("");
+      return `<div class="month-heat-client"><span class="client-mini-avatar color-${client.color}">${escapeHtml(getInitials(client.name))}</span><strong>${escapeHtml(client.name)}</strong></div>${cells}`;
+    }).join("");
+    const clientTargetCards = trackedClients.map((client) => {
+      const monthlyTarget = getMonthlyClientTarget(client);
+      const scheduled = getMonthlyScheduledHours(client.id, null, monthDate);
+      const credited = state.rules.reduce((sum, rule) =>
+        sum + Math.min(getMonthlyScheduledHours(client.id, rule.id, monthDate), getMonthlyClientTarget(client, rule.id)), 0);
+      const completionPercent = monthlyTarget > 0
+        ? Math.min(100, Math.max(0, Math.round(credited / monthlyTarget * 100)))
+        : 0;
+      const targetDonuts = state.rules
+        .filter((rule) => getMonthlyClientTarget(client, rule.id) > 0)
+        .map((rule) => {
+          const target = getMonthlyClientTarget(client, rule.id);
+          const actual = getMonthlyScheduledHours(client.id, rule.id, monthDate);
+          const percent = target > 0 ? actual / target * 100 : 0;
+          const displayPercent = Math.min(100, Math.max(0, Math.round(percent)));
+          const ringPercent = Math.min(100, Math.max(0, percent));
+          const met = actual + 0.001 >= target;
+          return `<div class="month-service-donut-item">
+            <div class="month-service-donut donut-${rule.color}" style="--completion:${ringPercent * 3.6}deg"><strong>${displayPercent}%</strong></div>
+            <div class="month-service-donut-copy">
+              <span><i class="rule-dot color-solid-${rule.color}"></i>${escapeHtml(rule.name)}</span>
+              <strong>${formatHours(actual)} / ${formatHours(target)}h</strong>
+              <small class="${met ? "met" : "under"}">${met ? "Target met" : `${formatHours(target - actual)}h remaining`}</small>
+            </div>
+          </div>`;
+        }).join("");
+      return `<article class="month-client-target-card">
+        <div class="month-client-target-summary">
+          <span class="client-mini-avatar color-${client.color}">${escapeHtml(getInitials(client.name))}</span>
+          <div><span>Monthly targets</span><h3>${escapeHtml(client.name)}</h3><p>${formatHours(scheduled)}h scheduled · ${formatHours(credited)} / ${formatHours(monthlyTarget)}h credited</p></div>
+          <strong>${completionPercent}% overall</strong>
+        </div>
+        <div class="month-service-donut-grid">${targetDonuts}</div>
+      </article>`;
+    }).join("");
     const insights = document.createElement("section");
     insights.className = "month-insights";
     insights.innerHTML = `
@@ -716,64 +703,56 @@
           <div class="month-day-chart">${DAYS.map((day, index) => `<div><strong>${formatHours(dayHours[index])}h</strong><span><i style="height:${Math.max(5, dayHours[index] / maxDayHours * 100)}%"></i></span><em>${day}</em></div>`).join("")}</div>
         </div>
       </div>
-      <div class="month-weeks-label"><strong>Weekly detail</strong><span>Open any week to make scheduling changes.</span></div>
     `;
     elements.monthView.appendChild(insights);
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
-    let week = startOfWeek(monthDate);
-
-    while (week <= lastOfMonth) {
-      const weekKey = dateKey(week);
-      const weekEnd = addDays(week, 4);
-      const card = document.createElement("section");
-      card.className = "month-week-card";
-      const clientRows = state.clients.map((client) => {
-        const total = getScheduledHours(client.id, null, weekKey);
-        if (total === 0) return "";
-        const ruleStats = state.rules.map((rule) => {
-          const hours = getScheduledHours(client.id, rule.id, weekKey);
-<<<<<<< HEAD
-          const ruleTarget = getProportionalWeekTarget(client, rule.id, week);
-=======
-          const ruleTarget = getClientTarget(client, rule.id);
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
-          return hours > 0
-            ? `<span class="month-rule-stat"><i class="rule-dot color-solid-${rule.color}"></i>${escapeHtml(rule.name)} ${formatHours(hours)}/${formatHours(ruleTarget)}h</span>`
-            : "";
-        }).join("");
-<<<<<<< HEAD
-        const target = getProportionalWeekTarget(client, null, week);
-=======
-        const target = getClientTarget(client);
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
-        const status = getHoursStatus(total, target);
-        return `<div class="month-client-row color-${client.color}">
-          <div class="month-client-main">
-            <strong>${escapeHtml(client.name)}</strong>
-            <span class="hours-status ${status}">${formatHours(total)} / ${formatHours(target)}h</span>
+    const detail = document.createElement("section");
+    detail.className = "month-detail-layout";
+    detail.innerHTML = `
+      <section class="month-detail-card month-heatmap-card">
+        <div class="month-detail-heading">
+          <div><span>Weekly coverage</span><strong>Client heatmap</strong></div>
+          <div class="month-heat-controls">
+            <p>Darker cells are closer to or above the selected target. Select a week to edit it.</p>
+            <label><span>Service target</span><select id="monthHeatmapRuleSelect" autocomplete="off">${heatmapOptions}</select></label>
           </div>
-          <div class="month-rule-stats">${ruleStats}</div>
-        </div>`;
-      }).join("");
-      card.innerHTML = `
-        <button class="month-week-heading" type="button" data-week-key="${weekKey}">
-          <span>Week of</span>
-          <strong>${formatMonthDay(week)} – ${formatMonthDay(weekEnd)}</strong>
-          <em>Open week →</em>
-        </button>
-        <div class="month-client-rows">${clientRows || '<p class="month-empty">No client sessions scheduled.</p>'}</div>
-      `;
-      card.querySelector(".month-week-heading").addEventListener("click", () => {
+        </div>
+        <div class="month-heat-legend" aria-label="Heatmap completion color scale">
+          <strong>Completion scale</strong>
+          <span><i class="heat-0"></i>No hours</span>
+          <span><i class="heat-1"></i>1–24%</span>
+          <span><i class="heat-2"></i>25–49%</span>
+          <span><i class="heat-3"></i>50–74%</span>
+          <span><i class="heat-4"></i>75–99%</span>
+          <span><i class="heat-5"></i>100%</span>
+        </div>
+        <div class="month-heatmap-scroll">
+          <div class="month-heatmap" style="--week-count:${monthWeeks.length};--heatmap-min:${120 + monthWeeks.length * 112}px">
+            <div class="month-heat-corner">Client</div>
+            ${monthWeeks.map((week) => `<button class="month-heat-week" type="button" data-week-key="${week.key}"><span>${formatMonthDay(week.start)}</span><strong>– ${formatMonthDay(week.end)}</strong></button>`).join("")}
+            ${heatmapRows || '<p class="month-empty">No clients to display.</p>'}
+          </div>
+        </div>
+      </section>
+      <section class="month-target-tracker-section">
+        <div class="month-detail-heading"><div><span>Monthly goals</span><strong>Client target tracker</strong></div><p>Each card expands automatically to include every assigned service target.</p></div>
+        <div class="month-client-target-grid">${clientTargetCards || '<p class="month-empty">No client targets assigned.</p>'}</div>
+      </section>
+    `;
+    elements.monthView.appendChild(detail);
+    detail.querySelector("#monthHeatmapRuleSelect").addEventListener("change", (event) => {
+      monthHeatmapRuleId = event.target.value;
+      renderMonthView();
+    });
+    elements.monthView.querySelectorAll("[data-week-key]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const weekKey = button.dataset.weekKey;
         state.weekStart = new Date(`${weekKey}T00:00:00`);
         state.lastWeekStart = new Date(`${weekKey}T00:00:00`);
         state.view = "week";
         saveState();
         render();
       });
-      elements.monthView.appendChild(card);
-      week = addDays(week, 7);
-    }
+    });
   }
 
   function renderTimeLabels() {
@@ -813,7 +792,6 @@
       .forEach(renderBlock);
   }
 
-<<<<<<< HEAD
   let calendarHoverSlot = null;
   let calendarContextPlacement = null;
 
@@ -884,8 +862,6 @@
     elements.calendarContextMenu.style.top = `${Math.max(8, Math.min(event.clientY, window.innerHeight - menuHeight - 8))}px`;
   }
 
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
   function renderClients() {
     elements.clientHoverPopup.classList.remove("visible");
     const query = elements.clientSearch.value.trim().toLowerCase();
@@ -894,7 +870,6 @@
     const filteredClients = state.clients.filter((client) =>
       client.name.toLowerCase().includes(query)
     );
-<<<<<<< HEAD
     const periodAppointments = state.view === "month" ? getMonthAppointments() : getCurrentWeekAppointments();
     const periodName = state.view === "month" ? "month" : "week";
     elements.clientPanelHint.textContent = state.view === "month"
@@ -904,12 +879,6 @@
     filteredClients.forEach((client) => {
       const scheduled = getPeriodScheduledHours(client.id);
       const required = getPeriodClientTarget(client);
-=======
-
-    filteredClients.forEach((client) => {
-      const scheduled = getScheduledHours(client.id);
-      const required = getClientTarget(client);
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
       const status = getHoursStatus(scheduled, required);
       const percentage = required > 0 ? Math.min((scheduled / required) * 100, 100) : 0;
       const statusText =
@@ -917,31 +886,18 @@
       const ruleProgressRows = state.rules
         .filter((rule) => getClientTarget(client, rule.id) > 0)
         .map((rule) => {
-<<<<<<< HEAD
           const ruleScheduled = getPeriodScheduledHours(client.id, rule.id);
           const ruleTarget = getPeriodClientTarget(client, rule.id);
           const rulePercentage = Math.min((ruleScheduled / ruleTarget) * 100, 100);
           const ruleStatus = getHoursStatus(ruleScheduled, ruleTarget);
           const frequency = getTargetFrequency(client, rule.id);
           return `<div class="client-rule-progress">
-            <div><span><i class="rule-dot color-solid-${rule.color}"></i>${escapeHtml(rule.name)}${frequency === "weekly" ? "" : ` · ${frequencyLabel(frequency)}`}</span><strong>${formatHours(ruleScheduled)} / ${formatHours(ruleTarget)}h/${state.view === "month" ? "mo" : "wk"}</strong></div>
-=======
-          const ruleScheduled = getScheduledHours(client.id, rule.id);
-          const ruleTarget = getClientTarget(client, rule.id);
-          const rulePercentage = Math.min((ruleScheduled / ruleTarget) * 100, 100);
-          const ruleStatus = getHoursStatus(ruleScheduled, ruleTarget);
-          return `<div class="client-rule-progress">
-            <div><span><i class="rule-dot color-solid-${rule.color}"></i>${escapeHtml(rule.name)}</span><strong>${formatHours(ruleScheduled)} / ${formatHours(ruleTarget)}h</strong></div>
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
+            <div><span><i class="rule-dot color-solid-${rule.color}"></i>${escapeHtml(rule.name)}${frequency === "weekly" ? "" : ` · ${frequencyLabel(frequency)}`}</span><strong>${formatHours(ruleScheduled)} / ${formatHours(ruleTarget)}h</strong></div>
             <div class="client-progress"><div class="client-progress-fill progress-${ruleStatus}" style="width:${rulePercentage}%"></div></div>
           </div>`;
         }).join("");
       const hoverNoteDays = DAYS.map((day, dayIndex) => {
-<<<<<<< HEAD
         const notes = periodAppointments
-=======
-        const notes = getCurrentWeekAppointments()
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
           .filter((appointment) => appointment.clientId === client.id && appointment.dayIndex === dayIndex)
           .flatMap(getSessionNotes);
         return notes.length
@@ -951,11 +907,7 @@
       const availableDays = DAYS.filter((_, index) => client.availability?.[index] !== false);
       const hoverRules = state.rules
         .filter((rule) => getClientTarget(client, rule.id) > 0)
-<<<<<<< HEAD
         .map((rule) => `<li><span><i class="rule-dot color-solid-${rule.color}"></i>${escapeHtml(rule.name)} · ${frequencyLabel(getTargetFrequency(client, rule.id))}</span><strong>${formatHours(getPeriodScheduledHours(client.id, rule.id))} / ${formatHours(getPeriodClientTarget(client, rule.id))} hrs/${state.view === "month" ? "mo" : "wk"}</strong></li>`)
-=======
-        .map((rule) => `<li><span><i class="rule-dot color-solid-${rule.color}"></i>${escapeHtml(rule.name)}</span><strong>${formatHours(getScheduledHours(client.id, rule.id))} / ${formatHours(getClientTarget(client, rule.id))} hrs</strong></li>`)
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
         .join("");
 
       const card = document.createElement("div");
@@ -968,11 +920,7 @@
             <div class="client-name">${escapeHtml(client.name)}</div>
             <span class="hours-status ${status}">${statusText}</span>
           </div>
-<<<<<<< HEAD
           <div class="client-hours">${formatHours(scheduled)} of ${formatHours(required)} hrs scheduled this ${periodName}</div>
-=======
-          <div class="client-hours">${formatHours(scheduled)} of ${formatHours(required)} total hrs scheduled</div>
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
           <div class="client-rule-progress-list">${ruleProgressRows || '<span class="no-targets">No service targets assigned</span>'}</div>
         </div>
         <div class="client-card-actions">
@@ -994,11 +942,7 @@
         <div class="hover-summary-heading"><strong>${escapeHtml(client.name)}</strong><span>${formatHours(scheduled)} / ${formatHours(required)} hrs</span></div>
         <ul class="hover-rule-list">${hoverRules || "<li>No targets assigned</li>"}</ul>
         <div class="hover-availability"><strong>Available:</strong> ${availableDays.length ? availableDays.join(", ") : "No weekdays selected"}</div>
-<<<<<<< HEAD
         <div class="hover-notes"><strong>Notes this ${periodName}</strong>${hoverNoteDays || "<p>No notes recorded yet.</p>"}</div>
-=======
-        <div class="hover-notes"><strong>Notes this week</strong>${hoverNoteDays || "<p>No notes recorded yet.</p>"}</div>
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
       `;
       let hoverTimer = null;
       card.addEventListener("mouseenter", () => {
@@ -1053,7 +997,6 @@
   }
 
   function renderWeeklySummary() {
-<<<<<<< HEAD
     const isMonth = state.view === "month";
     const scheduled = state.clients.reduce(
       (sum, client) => sum + getPeriodScheduledHours(client.id),
@@ -1070,25 +1013,10 @@
 
     elements.periodSummaryLabel.textContent = `Tracked this ${isMonth ? "month" : "week"}`;
     elements.weeklyHoursText.textContent = `${formatHours(credited)} / ${formatHours(required)} hrs`;
-=======
-    const scheduled = state.clients.reduce(
-      (sum, client) => sum + getScheduledHours(client.id),
-      0
-    );
-    const required = state.clients.reduce(
-      (sum, client) => sum + getClientTarget(client),
-      0
-    );
-    const percentage = required > 0 ? Math.min((scheduled / required) * 100, 100) : 0;
-    const status = getHoursStatus(scheduled, required);
-
-    elements.weeklyHoursText.textContent = `${formatHours(scheduled)} / ${formatHours(required)} hrs`;
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     elements.weeklyHoursFill.style.width = `${percentage}%`;
     elements.weeklyHoursFill.className = `summary-progress-fill progress-${status}`;
 
     if (required === 0) {
-<<<<<<< HEAD
       elements.weeklyHoursMessage.textContent = `Add clients to begin tracking ${isMonth ? "monthly" : "weekly"} requirements.`;
     } else if (status === "met") {
       elements.weeklyHoursMessage.textContent = `All combined ${isMonth ? "monthly" : "weekly"} hours are scheduled.`;
@@ -1109,16 +1037,6 @@
         <div class="period-service-track"><div class="progress-${ruleStatus}" style="width:${percentage}%"></div></div>
       </div>`;
     }).join("");
-=======
-      elements.weeklyHoursMessage.textContent = "Add clients to begin tracking weekly requirements.";
-    } else if (status === "met") {
-      elements.weeklyHoursMessage.textContent = "All combined required hours are scheduled.";
-    } else if (status === "over") {
-      elements.weeklyHoursMessage.textContent = `${formatHours(scheduled - required)} hours above the combined target.`;
-    } else {
-      elements.weeklyHoursMessage.textContent = `${formatHours(required - scheduled)} hours remain to be scheduled.`;
-    }
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
   }
 
   function getInitials(name) {
@@ -1626,7 +1544,6 @@
     return `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(totalMinutes % 60).padStart(2, "0")}`;
   }
 
-<<<<<<< HEAD
   function normalizeSpacingRule(rule) {
     return {
       ruleId: rule?.ruleId || "all",
@@ -1725,15 +1642,6 @@
     elements.optimizerSpacingEditor.classList.add("hidden");
     renderOptimizerSpacingRules();
     if (!optimizerSpacingDraft.length) showOptimizerSpacingEditor();
-=======
-  function showOptimizerModal() {
-    const settings = state.optimizerSettings || defaultOptimizerSettings();
-    elements.optimizerStartTime.value = slotToTimeValue(settings.startSlot);
-    elements.optimizerEndTime.value = slotToTimeValue(settings.endSlot);
-    elements.optimizerMinDuration.value = String(settings.minMinutes);
-    elements.optimizerMaxDuration.value = String(settings.maxMinutes);
-    elements.optimizerGap.value = String(settings.gapMinutes);
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     elements.optimizerPriority.value = settings.priority || "balanced";
     elements.optimizerUsePriorityClient.checked = Boolean(settings.usePriorityClient);
     elements.optimizerPriorityClient.innerHTML = state.clients
@@ -1920,10 +1828,7 @@
   }
 
   function buildOptimizedSchedule(settings) {
-<<<<<<< HEAD
     settings = normalizeOptimizerSettings(settings);
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     const weekKey = dateKey(startOfWeek(state.weekStart));
     if (settings.replaceGenerated) {
       state.appointments = state.appointments.filter(
@@ -1933,7 +1838,6 @@
 
     const appointments = state.appointments.filter((item) => item.weekKey === weekKey);
     const blocks = state.blocks.filter((item) => item.weekKey === weekKey);
-<<<<<<< HEAD
     const created = [];
     const shuffle = (items) => {
       const copy = [...items];
@@ -1944,75 +1848,34 @@
       return copy;
     };
 
-    const weekSegments = getWeekMonthSegments(state.weekStart);
-=======
-    const gapSlots = Math.ceil(settings.gapMinutes / SLOT_MINUTES);
-    const minSlots = Math.ceil(settings.minMinutes / SLOT_MINUTES);
-    const maxSlots = Math.floor(settings.maxMinutes / SLOT_MINUTES);
-    const created = [];
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
-
     const needs = [];
     state.clients.forEach((client, clientOrder) => {
       state.rules.forEach((rule, ruleOrder) => {
-<<<<<<< HEAD
-        weekSegments.forEach((segment) => {
-          const allowedDays = segment.dates
-            .filter(({ dayIndex }) => client.availability?.[dayIndex] !== false)
-            .map(({ dayIndex }) => dayIndex);
-          if (!allowedDays.length) return;
-          const monthlyTarget = getMonthlyClientTarget(client, rule.id);
-          const serviceDaysInMonth = clientServiceDaysInMonth(client, segment.monthDate);
-          if (!serviceDaysInMonth) return;
-          const segmentTarget = monthlyTarget * allowedDays.length / serviceDaysInMonth;
-          const segmentScheduled = getScheduledHoursForDays(
-            client.id,
-            rule.id,
-            weekKey,
-            segment.dates.map(({ dayIndex }) => dayIndex)
-          );
-          const remainingMinutes = Math.max(0, Math.round((segmentTarget - segmentScheduled) * 60));
-          if (remainingMinutes > 0) {
-            needs.push({
-              client,
-              rule,
-              targetMonth: segment.key,
-              allowedDays,
-              remainingSlots: Math.ceil(remainingMinutes / SLOT_MINUTES),
-              clientOrder,
-              ruleOrder,
-              spacing: spacingForService(settings, rule.id)
-            });
-          }
-        });
-=======
-        const remainingMinutes = Math.max(
-          0,
-          Math.round((getClientTarget(client, rule.id) - getScheduledHours(client.id, rule.id, weekKey)) * 60)
-        );
+        const allowedDays = DAYS
+          .map((_, dayIndex) => dayIndex)
+          .filter((dayIndex) => client.availability?.[dayIndex] !== false);
+        if (!allowedDays.length) return;
+        const weeklyTarget = getWeeklyClientTarget(client, rule.id);
+        const weeklyScheduled = getScheduledHours(client.id, rule.id, weekKey);
+        const remainingMinutes = Math.max(0, Math.round((weeklyTarget - weeklyScheduled) * 60));
         if (remainingMinutes > 0) {
-          needs.push({ client, rule, remainingSlots: Math.ceil(remainingMinutes / SLOT_MINUTES), clientOrder, ruleOrder });
+          needs.push({
+            client,
+            rule,
+            allowedDays,
+            remainingSlots: Math.ceil(remainingMinutes / SLOT_MINUTES),
+            clientOrder,
+            ruleOrder,
+            spacing: spacingForService(settings, rule.id)
+          });
         }
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
       });
     });
 
     const priorityId = settings.usePriorityClient ? settings.priorityClientId : "";
-<<<<<<< HEAD
 
     const canPlace = (need, dayIndex, startSlot, durationSlots) => {
       if (!need.allowedDays.includes(dayIndex)) return false;
-=======
-    needs.sort((a, b) => {
-      if ((a.client.id === priorityId) !== (b.client.id === priorityId)) return a.client.id === priorityId ? -1 : 1;
-      if (settings.priority === "largest" && b.remainingSlots !== a.remainingSlots) {
-        return b.remainingSlots - a.remainingSlots;
-      }
-      return a.clientOrder - b.clientOrder || a.ruleOrder - b.ruleOrder;
-    });
-
-    const canPlace = (need, dayIndex, startSlot, durationSlots) => {
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
       if (need.client.availability?.[dayIndex] === false) return false;
       if (startSlot < settings.startSlot || startSlot + durationSlots > settings.endSlot) return false;
       if (blocks.some((block) => {
@@ -2022,14 +1885,10 @@
       return !appointments.concat(created).some((item) => {
         if (item.dayIndex !== dayIndex) return false;
         if (intervalsOverlap(startSlot, durationSlots, item.startSlot, item.durationSlots)) return true;
-<<<<<<< HEAD
         const itemSpacing = spacingForService(settings, item.ruleId);
         const requiredGap = item.clientId === need.client.id
           ? 1
           : Math.ceil(Math.max(need.spacing.gapMinutes, itemSpacing.gapMinutes) / SLOT_MINUTES);
-=======
-        const requiredGap = item.clientId === need.client.id ? 1 : gapSlots;
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
         if (requiredGap === 0) return false;
         return startSlot < item.startSlot + item.durationSlots + requiredGap &&
           item.startSlot < startSlot + durationSlots + requiredGap;
@@ -2049,7 +1908,6 @@
       };
     };
 
-<<<<<<< HEAD
     const scoreCandidate = (need, candidate) => {
       const scheduled = appointments.concat(created);
       const load = getDayLoad(candidate.dayIndex);
@@ -2113,39 +1971,16 @@
         for (const duration of durationChoices(need)) {
           const candidates = [];
           for (let dayIndex = 0; dayIndex < DAYS.length; dayIndex += 1) {
-=======
-    let progress = true;
-    while (progress && needs.some((need) => need.remainingSlots > 0)) {
-      progress = false;
-      for (const need of needs) {
-        if (need.remainingSlots <= 0) continue;
-        if (need.remainingSlots < minSlots) continue;
-        let desired = Math.min(maxSlots, need.remainingSlots);
-        let placement = null;
-
-        for (let duration = desired; duration >= Math.min(minSlots, desired) && !placement; duration -= 1) {
-          const candidates = [];
-          for (let dayIndex = 0; dayIndex < DAYS.length; dayIndex += 1) {
-            const load = getDayLoad(dayIndex);
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
             for (let startSlot = settings.startSlot; startSlot + duration <= settings.endSlot; startSlot += 1) {
               if (canPlace(need, dayIndex, startSlot, duration)) {
                 candidates.push({
                   dayIndex,
                   startSlot,
-<<<<<<< HEAD
                   durationSlots: duration
-=======
-                  durationSlots: duration,
-                  itemCount: load.itemCount,
-                  occupiedSlots: load.occupiedSlots,
-                  variation: Math.random()
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
                 });
               }
             }
           }
-<<<<<<< HEAD
           candidates.forEach((candidate) => {
             candidate.score = scoreCandidate(need, candidate);
           });
@@ -2156,22 +1991,6 @@
             placement = variedShortlist[pick];
             delete placement.score;
             break;
-=======
-          candidates.sort((a, b) =>
-            a.itemCount - b.itemCount ||
-            a.occupiedSlots - b.occupiedSlots ||
-            a.variation - b.variation
-          );
-          if (candidates.length) {
-            const bestCount = candidates[0].itemCount;
-            const bestOccupied = candidates[0].occupiedSlots;
-            const equallyBalanced = candidates.filter(
-              (candidate) =>
-                candidate.itemCount === bestCount &&
-                candidate.occupiedSlots === bestOccupied
-            );
-            placement = equallyBalanced[Math.floor(Math.random() * equallyBalanced.length)];
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
           }
         }
 
@@ -2184,11 +2003,7 @@
             ...placement,
             createdBy: "optimizer"
           });
-<<<<<<< HEAD
           need.remainingSlots = Math.max(0, need.remainingSlots - placement.durationSlots);
-=======
-          need.remainingSlots -= placement.durationSlots;
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
           progress = true;
         }
       }
@@ -2203,13 +2018,7 @@
     return {
       startSlot: timeValueToSlot("08:00"),
       endSlot: timeValueToSlot("17:00"),
-<<<<<<< HEAD
       spacingRules: [{ ruleId: "all", minMinutes: 60, maxMinutes: 120, gapMinutes: 15 }],
-=======
-      minMinutes: 60,
-      maxMinutes: 120,
-      gapMinutes: 15,
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
       priority: "balanced",
       usePriorityClient: false,
       priorityClientId: "",
@@ -2219,31 +2028,16 @@
 
   function allCurrentTargetsMet() {
     const weekKey = dateKey(startOfWeek(state.weekStart));
-<<<<<<< HEAD
-    const hasTargets = state.clients.some((client) => getProportionalWeekTarget(client) > 0);
+    const hasTargets = state.clients.some((client) => getWeeklyClientTarget(client) > 0);
     return hasTargets && state.clients.every((client) =>
       state.rules.every((rule) =>
-        getScheduledHours(client.id, rule.id, weekKey) + 0.001 >= getProportionalWeekTarget(client, rule.id)
-=======
-    const hasTargets = state.clients.some((client) => getClientTarget(client) > 0);
-    return hasTargets && state.clients.every((client) =>
-      state.rules.every((rule) =>
-        getScheduledHours(client.id, rule.id, weekKey) + 0.001 >= getClientTarget(client, rule.id)
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
+        getScheduledHours(client.id, rule.id, weekKey) + 0.001 >= getWeeklyClientTarget(client, rule.id)
       )
     );
   }
 
   function runSavedOptimizer() {
     closeActionMenus();
-<<<<<<< HEAD
-=======
-    if (allCurrentTargetsMet() &&
-        !confirm("The current schedule already meets every client target. Create a different valid combination anyway?")) {
-      showToast("Kept the current schedule.");
-      return;
-    }
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     const result = buildOptimizedSchedule({
       ...(state.optimizerSettings || defaultOptimizerSettings()),
       replaceGenerated: true
@@ -2253,11 +2047,7 @@
     const scheduledHours = result.created.reduce((sum, item) => sum + item.durationSlots, 0) * SLOT_MINUTES / 60;
     const remainingHours = result.unscheduledSlots * SLOT_MINUTES / 60;
     if (result.created.length === 0 && remainingHours === 0) {
-<<<<<<< HEAD
-      showToast("This week’s month-aware target allocation is already covered.");
-=======
-      showToast("All client goals are already met.");
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
+      showToast("This week’s targets are already covered.");
     } else if (remainingHours > 0) {
       showToast(`Added ${result.created.length} sessions; ${formatHours(remainingHours)} hours could not fit.`);
     } else {
@@ -2287,7 +2077,6 @@
     elements.clientTargetInputs.innerHTML = state.rules.map((rule) => `
       <label class="target-input-row">
         <span><i class="rule-dot color-solid-${rule.color}"></i>${escapeHtml(rule.name)}</span>
-<<<<<<< HEAD
         <input type="number" min="0" max="320" step="0.5" value="${client ? getRawClientTarget(client, rule.id) : 0}" data-target-amount data-rule-id="${rule.id}" aria-label="${escapeHtml(rule.name)} target hours" />
         <select data-target-frequency data-rule-id="${rule.id}" aria-label="${escapeHtml(rule.name)} target frequency">
           <option value="weekly" ${!client || getTargetFrequency(client, rule.id) === "weekly" ? "selected" : ""}>Weekly</option>
@@ -2295,10 +2084,6 @@
           <option value="monthly" ${client && getTargetFrequency(client, rule.id) === "monthly" ? "selected" : ""}>Monthly</option>
         </select>
         <em>${client ? `${formatHours(getClientTarget(client, rule.id))}h/wk` : "weekly goal"}</em>
-=======
-        <input type="number" min="0" max="80" step="0.5" value="${client ? getClientTarget(client, rule.id) : 0}" data-rule-id="${rule.id}" aria-label="${escapeHtml(rule.name)} weekly target hours" />
-        <em>hrs/week</em>
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
       </label>
     `).join("");
   }
@@ -2344,10 +2129,7 @@
         const fallbackId = state.rules[0].id;
         state.clients.forEach((client) => {
           if (client.targets) delete client.targets[rule.id];
-<<<<<<< HEAD
           if (client.targetFrequencies) delete client.targetFrequencies[rule.id];
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
         });
         state.appointments.forEach((appointment) => {
           if (appointment.ruleId === rule.id) appointment.ruleId = fallbackId;
@@ -2365,7 +2147,6 @@
     elements.summaryModal.classList.add("hidden");
   }
 
-<<<<<<< HEAD
   function clinicRbtIdentifiers() {
     return [...new Set(clinicScheduleData.flatMap((group) => group.rows.map((row) => row.rbt)).filter(Boolean))]
       .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
@@ -2390,18 +2171,12 @@
       : elements.sessionRbtSelect.value;
   }
 
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
   function showSessionModal(appointment) {
     const client = state.clients.find((item) => item.id === appointment.clientId);
     const scheduledMinutes = appointment.durationSlots * SLOT_MINUTES;
     elements.sessionIdInput.value = appointment.id;
     elements.sessionModalSubtitle.textContent = `${client?.name || "Client"} · ${DAYS[appointment.dayIndex]} · ${minutesToTime(appointment.startSlot * SLOT_MINUTES)}`;
-<<<<<<< HEAD
     populateSessionRbtOptions(appointment.rbtId || "");
-=======
-    elements.sessionRbtInput.value = appointment.rbtId || "";
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     elements.sessionRuleInput.innerHTML = state.rules.map((rule) =>
       `<option value="${rule.id}">${escapeHtml(rule.name)}</option>`
     ).join("");
@@ -2419,11 +2194,7 @@
     elements.sessionRepeatCountInput.value = String(appointment.recurrenceCount || 4);
     updateRepeatVisibility(elements.sessionRepeatInput, elements.sessionRepeatCountLabel);
     elements.sessionModal.classList.remove("hidden");
-<<<<<<< HEAD
     elements.sessionRbtSelect.focus();
-=======
-    elements.sessionRbtInput.focus();
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
   }
 
   function populateBlockOptions() {
@@ -2449,7 +2220,6 @@
     elements.blockDaySpanInput.value = String(Math.min(Number(selected) || 1, maximum));
   }
 
-<<<<<<< HEAD
   function showBlockModal(item = null, preset = null) {
     populateBlockOptions();
     elements.blockForm.dataset.blockId = item?.id || "";
@@ -2458,16 +2228,6 @@
     updateBlockDaySpanOptions(item?.daySpan ?? 1);
     elements.blockStartInput.value = String(item?.startSlot ?? preset?.startSlot ?? timeValueToSlot("12:00"));
     elements.blockDurationInput.value = String(item?.durationSlots ?? preset?.durationSlots ?? 4);
-=======
-  function showBlockModal(item = null) {
-    populateBlockOptions();
-    elements.blockForm.dataset.blockId = item?.id || "";
-    elements.blockTitleInput.value = item?.title || "Billing";
-    elements.blockDayInput.value = String(item?.dayIndex ?? 0);
-    updateBlockDaySpanOptions(item?.daySpan ?? 1);
-    elements.blockStartInput.value = String(item?.startSlot ?? timeValueToSlot("12:00"));
-    elements.blockDurationInput.value = String(item?.durationSlots ?? 4);
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     elements.blockNotesInput.value = item?.notes || "";
     elements.blockRepeatInput.value = ["daily", "weekly"].includes(item?.recurrence)
       ? item.recurrence
@@ -2479,7 +2239,6 @@
     elements.blockTitleInput.focus();
   }
 
-<<<<<<< HEAD
   function showMonthlySummary() {
     const monthDate = new Date(state.weekStart.getFullYear(), state.weekStart.getMonth(), 1);
     const appointments = getMonthAppointments(monthDate);
@@ -2539,8 +2298,6 @@
     else showWeeklySummary();
   }
 
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
   function showWeeklySummary() {
     const appointments = getCurrentWeekAppointments();
     const blocks = state.blocks.filter((item) => item.weekKey === dateKey(state.weekStart));
@@ -2555,31 +2312,19 @@
     ) / 60;
     const targetSessions = appointments.filter((item) => item.targetsMet).length;
 
-<<<<<<< HEAD
     elements.summaryModalTitle.textContent = "Weekly summary";
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     elements.summaryWeekLabel.textContent = formatWeekRange();
     const clientCards = state.clients.map((client) => {
       const clientAppointments = appointments.filter((item) => item.clientId === client.id);
       const actual = getActualHours(client.id);
-<<<<<<< HEAD
-      const target = getProportionalWeekTarget(client);
-=======
-      const target = getClientTarget(client);
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
+      const target = getWeeklyClientTarget(client);
       const status = getHoursStatus(actual, target);
       const serviceProgress = state.rules
         .filter((rule) => getClientTarget(client, rule.id) > 0)
         .map((rule) => {
           const completed = getScheduledHours(client.id, rule.id);
-<<<<<<< HEAD
-          const ruleTarget = getProportionalWeekTarget(client, rule.id);
+          const ruleTarget = getWeeklyClientTarget(client, rule.id);
           return `<span><i class="rule-dot color-solid-${rule.color}"></i>${escapeHtml(rule.name)} (${frequencyLabel(getTargetFrequency(client, rule.id))}): ${formatHours(completed)} / ${formatHours(ruleTarget)} hrs/wk</span>`;
-=======
-          const ruleTarget = getClientTarget(client, rule.id);
-          return `<span><i class="rule-dot color-solid-${rule.color}"></i>${escapeHtml(rule.name)}: ${formatHours(completed)} / ${formatHours(ruleTarget)} hrs</span>`;
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
         }).join("");
       const notes = DAYS.map((day, dayIndex) => {
         const dayAppointments = clientAppointments.filter((item) => item.dayIndex === dayIndex);
@@ -2650,7 +2395,6 @@
     render();
   });
 
-<<<<<<< HEAD
   elements.scheduleGrid.addEventListener("pointermove", updateCalendarHoverSlot);
   elements.scheduleGrid.addEventListener("pointerleave", () => {
     if (elements.calendarContextMenu.classList.contains("hidden")) clearCalendarHoverSlot();
@@ -2691,7 +2435,7 @@
       showToast("That time is no longer available.");
       return;
     }
-    const preferredRule = state.rules.find((rule) => getProportionalWeekTarget(client, rule.id) > getScheduledHours(client.id, rule.id)) || state.rules[0];
+    const preferredRule = state.rules.find((rule) => getWeeklyClientTarget(client, rule.id) > getScheduledHours(client.id, rule.id)) || state.rules[0];
     const appointment = {
       id: makeId(),
       clientId: client.id,
@@ -2707,8 +2451,6 @@
     showSessionModal(appointment);
   });
 
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
   elements.addMenuBtn.addEventListener("click", (event) => {
     event.stopPropagation();
     toggleActionMenu(elements.addMenu, elements.addMenuBtn);
@@ -2747,18 +2489,13 @@
     closeActionMenus();
     showBlockModal();
   });
-<<<<<<< HEAD
   elements.weeklySummaryBtn.addEventListener("click", showPeriodSummary);
-=======
-  elements.weeklySummaryBtn.addEventListener("click", showWeeklySummary);
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
   elements.optimizerUsePriorityClient.addEventListener("change", () => {
     elements.optimizerPriorityClientLabel.classList.toggle(
       "hidden",
       !elements.optimizerUsePriorityClient.checked
     );
   });
-<<<<<<< HEAD
   elements.addOptimizerSpacingBtn.addEventListener("click", commitOptimizerSpacingEditor);
   elements.showOptimizerSpacingEditorBtn.addEventListener("click", () => showOptimizerSpacingEditor("all"));
   elements.optimizerSpacingRule.addEventListener("change", () => {
@@ -2775,8 +2512,6 @@
     renderOptimizerSpacingRules();
     if (!optimizerSpacingDraft.length) showOptimizerSpacingEditor("all");
   });
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
   elements.closeOptimizerModalBtn.addEventListener("click", hideOptimizerModal);
   elements.cancelOptimizerModalBtn.addEventListener("click", hideOptimizerModal);
   elements.optimizerModal.addEventListener("click", (event) => {
@@ -2786,38 +2521,19 @@
     event.preventDefault();
     const startSlot = timeValueToSlot(elements.optimizerStartTime.value);
     const endSlot = timeValueToSlot(elements.optimizerEndTime.value);
-<<<<<<< HEAD
-=======
-    const minMinutes = Number(elements.optimizerMinDuration.value);
-    const maxMinutes = Number(elements.optimizerMaxDuration.value);
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
 
     if (endSlot <= startSlot) {
       elements.optimizerResult.textContent = "The ending time must be later than the starting time.";
       elements.optimizerResult.className = "optimizer-result partial";
       return;
     }
-<<<<<<< HEAD
     if (!elements.optimizerSpacingEditor.classList.contains("hidden") && !commitOptimizerSpacingEditor()) return;
     if (!optimizerSpacingDraft.length) optimizerSpacingDraft = defaultOptimizerSettings().spacingRules.map((rule) => ({ ...rule }));
-=======
-    if (maxMinutes < minMinutes) {
-      elements.optimizerResult.textContent = "Maximum session length must be at least the minimum session length.";
-      elements.optimizerResult.className = "optimizer-result partial";
-      return;
-    }
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
 
     const settings = {
       startSlot,
       endSlot,
-<<<<<<< HEAD
       spacingRules: optimizerSpacingDraft.map((rule) => ({ ...rule })),
-=======
-      minMinutes,
-      maxMinutes,
-      gapMinutes: Number(elements.optimizerGap.value),
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
       priority: elements.optimizerPriority.value,
       usePriorityClient: elements.optimizerUsePriorityClient.checked,
       priorityClientId: elements.optimizerPriorityClient.value,
@@ -2832,11 +2548,7 @@
     const remainingHours = result.unscheduledSlots * SLOT_MINUTES / 60;
     elements.optimizerResult.className = `optimizer-result${remainingHours ? " partial" : ""}`;
     if (result.created.length === 0 && remainingHours === 0) {
-<<<<<<< HEAD
-      elements.optimizerResult.textContent = "This week’s month-aware target allocation is already covered.";
-=======
-      elements.optimizerResult.textContent = "All client goals for this week are already met.";
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
+      elements.optimizerResult.textContent = "This week’s targets are already covered.";
     } else if (remainingHours > 0) {
       elements.optimizerResult.textContent =
         `Added ${result.created.length} sessions (${formatHours(scheduledHours)} hours). ` +
@@ -2857,14 +2569,11 @@
   elements.sessionRepeatInput.addEventListener("change", () =>
     updateRepeatVisibility(elements.sessionRepeatInput, elements.sessionRepeatCountLabel)
   );
-<<<<<<< HEAD
   elements.sessionRbtSelect.addEventListener("change", () => {
     const custom = elements.sessionRbtSelect.value === "__custom__";
     elements.sessionRbtCustomInput.classList.toggle("hidden", !custom);
     if (custom) elements.sessionRbtCustomInput.focus();
   });
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
   elements.blockRepeatInput.addEventListener("change", updateBlockRepeatControls);
   elements.blockDayInput.addEventListener("change", () =>
     updateBlockDaySpanOptions(elements.blockDaySpanInput.value)
@@ -2875,7 +2584,6 @@
   elements.clientModal.addEventListener("click", (event) => {
     if (event.target === elements.clientModal) hideModal();
   });
-<<<<<<< HEAD
   elements.clientTargetInputs.addEventListener("input", (event) => {
     const row = event.target.closest(".target-input-row");
     if (!row) return;
@@ -2889,8 +2597,6 @@
       event.target.dispatchEvent(new Event("input", { bubbles: true }));
     }
   });
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
 
   elements.addRuleForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -2922,11 +2628,7 @@
     event.preventDefault();
     const appointment = state.appointments.find((item) => item.id === elements.sessionIdInput.value);
     if (!appointment) return;
-<<<<<<< HEAD
     appointment.rbtId = selectedSessionRbt();
-=======
-    appointment.rbtId = elements.sessionRbtInput.value.trim();
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     appointment.ruleId = elements.sessionRuleInput.value;
     appointment.actualMinutes = Math.max(0, Number(elements.sessionActualMinutesInput.value) || 0);
     appointment.notes = elements.sessionNotesInput.value
@@ -3022,7 +2724,6 @@
     const name = elements.clientNameInput.value.trim();
     const color = elements.clientColorInput.value;
     const targets = {};
-<<<<<<< HEAD
     const targetFrequencies = {};
     elements.clientTargetInputs.querySelectorAll("[data-target-amount]").forEach((input) => {
       targets[input.dataset.ruleId] = Math.max(0, Number(input.value) || 0);
@@ -3030,11 +2731,6 @@
     elements.clientTargetInputs.querySelectorAll("[data-target-frequency]").forEach((select) => {
       targetFrequencies[select.dataset.ruleId] = select.value;
     });
-=======
-    elements.clientTargetInputs.querySelectorAll("[data-rule-id]").forEach((input) => {
-      targets[input.dataset.ruleId] = Math.max(0, Number(input.value) || 0);
-    });
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
     const availability = DAYS.map((_, index) =>
       Boolean(elements.clientAvailabilityInputs.querySelector(`[data-day-index="${index}"]`)?.checked)
     );
@@ -3048,10 +2744,7 @@
       existingClient.name = name;
       existingClient.color = color;
       existingClient.targets = targets;
-<<<<<<< HEAD
       existingClient.targetFrequencies = targetFrequencies;
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
       existingClient.availability = availability;
     } else {
       state.clients.push({
@@ -3059,10 +2752,7 @@
         name,
         color,
         targets,
-<<<<<<< HEAD
         targetFrequencies,
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
         availability
       });
     }
@@ -3076,10 +2766,7 @@
   elements.clientSearch.addEventListener("input", renderClients);
   document.addEventListener("click", (event) => {
     if (!event.target.closest(".dropdown-action, .split-action")) closeActionMenus();
-<<<<<<< HEAD
     if (!event.target.closest("#calendarContextMenu")) hideCalendarContextMenu();
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
   });
 
   elements.clearScheduleBtn.addEventListener("click", () => {
@@ -3109,17 +2796,13 @@
       if (!elements.clientModal.classList.contains("hidden")) hideModal();
       if (!elements.rulesModal.classList.contains("hidden")) hideRulesModal();
       if (!elements.optimizerModal.classList.contains("hidden")) hideOptimizerModal();
-<<<<<<< HEAD
       hideCalendarContextMenu();
-=======
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
       hideDetailModals();
       cleanupDrag();
       render();
     }
   });
 
-<<<<<<< HEAD
 
   // --- Shared clinic schedule prototype ---
   const clinicScheduleData = [
@@ -3678,8 +3361,4 @@
   renderClinicSchedule();
   renderClientOperations();
   showScheduleTab("clinic");
-=======
-  loadState();
-  render();
->>>>>>> cd881dab057d50d6823bf5fd7e34acd8416c48b0
 })();
