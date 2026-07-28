@@ -25,9 +25,13 @@ SESSION TRACKING
 - Use + Block time to reserve calendar time for billing, administration,
   meetings, or other non-client work. Click a blocked item to edit or delete it.
 - Drag blocked-time items between days and times just like client sessions.
-- Client sessions and blocked time can repeat weekly for 2 to 52 weeks. Open
-  the item's details, choose Weekly, and select the total number of weeks.
+- Client sessions can repeat weekly, biweekly, or monthly for 2 to 52 total
+  occurrences. Monthly sessions keep the same weekday occurrence in each month.
+- Blocked time can repeat weekly for 2 to 52 weeks.
 - Blocked time can also repeat daily across 2 to 30 weekdays.
+- Use Copy schedule in the top-right of the weekly calendar to copy every client
+  session and blocked-time item into the next week or up to 52 future weeks.
+  Existing destination items are kept and overlapping copies are skipped.
 - Drag the lower-right corner of blocked time vertically to change its duration
   and horizontally to cover the same time across adjacent weekdays. The editor
   also provides a Days covered field for precise changes.

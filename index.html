@@ -170,11 +170,16 @@
             <strong>Weekly calendar</strong>
           <span>15-minute scheduling increments</span>
           </div>
-          <div class="calendar-key">
-            <span><i class="key-dot block"></i>Blocked time</span>
-            <span><i class="key-dot under"></i>Under target</span>
-            <span><i class="key-dot met"></i>Target met</span>
-            <span><i class="key-dot over"></i>Over target</span>
+          <div class="calendar-toolbar-actions">
+            <div class="calendar-key">
+              <span><i class="key-dot block"></i>Blocked time</span>
+              <span><i class="key-dot under"></i>Under target</span>
+              <span><i class="key-dot met"></i>Target met</span>
+              <span><i class="key-dot over"></i>Over target</span>
+            </div>
+            <button id="copyScheduleBtn" class="button secondary copy-schedule-button" type="button" title="Copy this entire schedule into future weeks">
+              <span aria-hidden="true">⧉</span> Copy schedule
+            </button>
           </div>
         </div>
 
@@ -269,17 +274,19 @@
       <div class="recurrence-panel">
         <div>
           <strong>Repeat session</strong>
-          <span>Create this same time slot in future weeks.</span>
+          <span>Create this same weekday and time on a regular schedule.</span>
         </div>
         <div class="recurrence-controls">
           <select id="sessionRepeatInput" aria-label="Session recurrence">
             <option value="none">Does not repeat</option>
             <option value="weekly">Weekly</option>
+            <option value="biweekly">Biweekly</option>
+            <option value="monthly">Monthly</option>
           </select>
           <label class="repeat-count-label hidden" id="sessionRepeatCountLabel">
             For
             <input id="sessionRepeatCountInput" type="number" min="2" max="52" value="4" />
-            weeks
+            occurrences
           </label>
         </div>
       </div>
@@ -287,6 +294,31 @@
         <button id="deleteSessionBtn" type="button" class="button danger-ghost">Delete session</button>
         <button id="cancelSessionModalBtn" type="button" class="button secondary">Cancel</button>
         <button type="submit" class="button primary">Save details</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="copyScheduleModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="copyScheduleModalTitle">
+    <form id="copyScheduleForm" class="modal copy-schedule-modal" autocomplete="off">
+      <div class="modal-header">
+        <div>
+          <h2 id="copyScheduleModalTitle">Copy this schedule</h2>
+          <p id="copyScheduleSourceLabel"></p>
+        </div>
+        <button id="closeCopyScheduleModalBtn" type="button" class="icon-button" aria-label="Close">×</button>
+      </div>
+      <label>
+        Number of future weeks
+        <input id="copyScheduleWeekCountInput" type="number" min="1" max="52" value="1" required />
+      </label>
+      <div class="copy-schedule-summary">
+        <strong id="copyScheduleDestinationLabel"></strong>
+        <span>Client appointments and blocked time will be copied. Session notes and actual-time documentation start blank.</span>
+      </div>
+      <p class="copy-schedule-note">Anything already scheduled in a destination week will be kept. Overlapping items are skipped instead of overwritten.</p>
+      <div class="modal-actions">
+        <button id="cancelCopyScheduleModalBtn" type="button" class="button secondary">Cancel</button>
+        <button id="confirmCopyScheduleBtn" type="submit" class="button primary">Copy schedule</button>
       </div>
     </form>
   </div>

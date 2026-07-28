@@ -63,6 +63,15 @@
     addBlockBtn: document.querySelector("#addBlockBtn"),
     weeklySummaryBtn: document.querySelector("#weeklySummaryBtn"),
     clearScheduleBtn: document.querySelector("#clearScheduleBtn"),
+    copyScheduleBtn: document.querySelector("#copyScheduleBtn"),
+    copyScheduleModal: document.querySelector("#copyScheduleModal"),
+    copyScheduleForm: document.querySelector("#copyScheduleForm"),
+    copyScheduleSourceLabel: document.querySelector("#copyScheduleSourceLabel"),
+    copyScheduleWeekCountInput: document.querySelector("#copyScheduleWeekCountInput"),
+    copyScheduleDestinationLabel: document.querySelector("#copyScheduleDestinationLabel"),
+    confirmCopyScheduleBtn: document.querySelector("#confirmCopyScheduleBtn"),
+    closeCopyScheduleModalBtn: document.querySelector("#closeCopyScheduleModalBtn"),
+    cancelCopyScheduleModalBtn: document.querySelector("#cancelCopyScheduleModalBtn"),
     clientModal: document.querySelector("#clientModal"),
     clientForm: document.querySelector("#clientForm"),
     clientModalTitle: document.querySelector("#clientModalTitle"),
@@ -180,6 +189,67 @@
 
   function dateFromKey(key) {
     return new Date(`${key}T00:00:00`);
+  }
+
+  function sameWeekdayInFutureMonth(date, monthOffset) {
+    const weekday = date.getDay();
+    const weekdayOccurrence = Math.floor((date.getDate() - 1) / 7);
+    const targetMonth = new Date(date.getFullYear(), date.getMonth() + monthOffset, 1);
+    const firstMatchingDate = 1 + (weekday - targetMonth.getDay() + 7) % 7;
+    let targetDate = firstMatchingDate + weekdayOccurrence * 7;
+    const lastDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0).getDate();
+    if (targetDate > lastDate) targetDate -= 7;
+    return new Date(targetMonth.getFullYear(), targetMonth.getMonth(), targetDate);
+  }
+
+  function sessionRecurrenceLabel(recurrence) {
+    if (recurrence === "biweekly") return "Biweekly";
+    if (recurrence === "monthly") return "Monthly";
+    if (recurrence === "weekly") return "Weekly";
+    return "";
+  }
+
+  function createSessionRecurrences(source, count, recurrence) {
+    if (!["weekly", "biweekly", "monthly"].includes(recurrence)) return;
+    const totalOccurrences = clamp(Number(count) || 2, 2, 52);
+    const groupId = source.recurrenceGroupId || makeId();
+    const sourceDate = addDays(dateFromKey(source.weekKey), Number(source.dayIndex) || 0);
+    const recurrenceStartDate = source.recurrenceStartDate || dateKey(sourceDate);
+    const startingDate = dateFromKey(recurrenceStartDate);
+    source.recurrenceGroupId = groupId;
+    source.recurrence = recurrence;
+    source.recurrenceCount = totalOccurrences;
+    source.recurrenceStartDate = recurrenceStartDate;
+
+    for (let offset = 1; offset < totalOccurrences; offset += 1) {
+      const occurrenceDate = recurrence === "monthly"
+        ? sameWeekdayInFutureMonth(startingDate, offset)
+        : addDays(startingDate, offset * (recurrence === "biweekly" ? 14 : 7));
+      const occurrenceWeek = startOfWeek(occurrenceDate);
+      const weekKey = dateKey(occurrenceWeek);
+      const dayIndex = occurrenceDate.getDay() - 1;
+      const alreadyExists = state.appointments.some(
+        (item) =>
+          item.recurrenceGroupId === groupId &&
+          item.weekKey === weekKey &&
+          item.dayIndex === dayIndex
+      );
+      if (alreadyExists) continue;
+      state.appointments.push({
+        ...source,
+        id: makeId(),
+        weekKey,
+        dayIndex,
+        actualMinutes: undefined,
+        notes: [],
+        billingNotes: "",
+        targetsMet: false,
+        recurrenceGroupId: groupId,
+        recurrence,
+        recurrenceCount: totalOccurrences,
+        recurrenceStartDate
+      });
+    }
   }
 
   function createWeeklyRecurrences(collection, source, count, type) {
@@ -535,6 +605,7 @@
     elements.monthViewBtn.classList.toggle("active", state.view === "month");
     elements.addBlockBtn.disabled = state.view === "month";
     elements.clearScheduleBtn.disabled = state.view === "month";
+    elements.copyScheduleBtn.disabled = state.view === "month";
     elements.weeklySummaryBtn.disabled = false;
     elements.weeklySummaryBtn.textContent = state.view === "month" ? "Monthly summary" : "Weekly summary";
     elements.scheduleCreatorBtn.disabled = state.view === "month";
@@ -708,6 +779,10 @@
     const detail = document.createElement("section");
     detail.className = "month-detail-layout";
     detail.innerHTML = `
+      <section class="month-target-tracker-section">
+        <div class="month-detail-heading"><div><span>Monthly goals</span><strong>Client target tracker</strong></div><p>Each card expands automatically to include every assigned service target.</p></div>
+        <div class="month-client-target-grid">${clientTargetCards || '<p class="month-empty">No client targets assigned.</p>'}</div>
+      </section>
       <section class="month-detail-card month-heatmap-card">
         <div class="month-detail-heading">
           <div><span>Weekly coverage</span><strong>Client heatmap</strong></div>
@@ -732,10 +807,6 @@
             ${heatmapRows || '<p class="month-empty">No clients to display.</p>'}
           </div>
         </div>
-      </section>
-      <section class="month-target-tracker-section">
-        <div class="month-detail-heading"><div><span>Monthly goals</span><strong>Client target tracker</strong></div><p>Each card expands automatically to include every assigned service target.</p></div>
-        <div class="month-client-target-grid">${clientTargetCards || '<p class="month-empty">No client targets assigned.</p>'}</div>
       </section>
     `;
     elements.monthView.appendChild(detail);
@@ -1091,7 +1162,7 @@
       </div>
       <span class="appointment-time">${minutesToTime(startMinutes)} – ${minutesToTime(endMinutes)}</span>
       <span class="appointment-service">${rule ? escapeHtml(rule.name) : "Uncategorized"}</span>
-      <span class="appointment-meta">${appointment.recurrence === "weekly" ? "↻ Weekly · " : ""}${appointment.rbtId ? `RBT: ${escapeHtml(appointment.rbtId)}` : "Add RBT + notes"}</span>
+      <span class="appointment-meta">${sessionRecurrenceLabel(appointment.recurrence) ? `↻ ${sessionRecurrenceLabel(appointment.recurrence)} · ` : ""}${appointment.rbtId ? `RBT: ${escapeHtml(appointment.rbtId)}` : "Add RBT + notes"}</span>
       <div class="resize-handle" title="Drag to resize"></div>
     `;
 
@@ -1687,9 +1758,9 @@
     durationSlots,
     daySpan = 1,
     ignoreAppointmentId = "",
-    ignoreBlockId = ""
+    ignoreBlockId = "",
+    weekKey = dateKey(startOfWeek(state.weekStart))
   }) {
-    const weekKey = dateKey(startOfWeek(state.weekStart));
     const lastDay = dayIndex + daySpan - 1;
     if (dayIndex < 0 || lastDay >= DAYS.length || startSlot < 0 || startSlot + durationSlots > TOTAL_SLOTS) {
       return false;
@@ -1710,6 +1781,69 @@
       const daysOverlap = dayIndex <= itemLastDay && item.dayIndex <= lastDay;
       return daysOverlap && intervalsOverlap(startSlot, durationSlots, item.startSlot, item.durationSlots);
     });
+  }
+
+  function independentScheduleCopy(source, targetWeekKey, type) {
+    const copy = {
+      ...source,
+      id: makeId(),
+      weekKey: targetWeekKey,
+      recurrence: "none"
+    };
+    delete copy.recurrenceGroupId;
+    delete copy.recurrenceCount;
+    delete copy.recurrenceStartDate;
+    delete copy.recurrenceStartWeek;
+    delete copy.createdBy;
+    if (type === "appointment") {
+      copy.actualMinutes = undefined;
+      copy.notes = [];
+      copy.billingNotes = "";
+      copy.targetsMet = false;
+    }
+    return copy;
+  }
+
+  function copyScheduleToFutureWeeks(sourceWeekKey, count) {
+    const weekCount = clamp(Number(count) || 1, 1, 52);
+    const sourceAppointments = state.appointments.filter((item) => item.weekKey === sourceWeekKey);
+    const sourceBlocks = state.blocks.filter((item) => item.weekKey === sourceWeekKey);
+    let copiedAppointments = 0;
+    let copiedBlocks = 0;
+    let skipped = 0;
+
+    for (let weekOffset = 1; weekOffset <= weekCount; weekOffset += 1) {
+      const targetWeekKey = dateKey(addDays(dateFromKey(sourceWeekKey), weekOffset * 7));
+      sourceAppointments.forEach((appointment) => {
+        if (!isCalendarPlacementFree({
+          dayIndex: appointment.dayIndex,
+          startSlot: appointment.startSlot,
+          durationSlots: appointment.durationSlots,
+          weekKey: targetWeekKey
+        })) {
+          skipped += 1;
+          return;
+        }
+        state.appointments.push(independentScheduleCopy(appointment, targetWeekKey, "appointment"));
+        copiedAppointments += 1;
+      });
+      sourceBlocks.forEach((block) => {
+        if (!isCalendarPlacementFree({
+          dayIndex: block.dayIndex,
+          startSlot: block.startSlot,
+          durationSlots: block.durationSlots,
+          daySpan: Number(block.daySpan) || 1,
+          weekKey: targetWeekKey
+        })) {
+          skipped += 1;
+          return;
+        }
+        state.blocks.push(independentScheduleCopy(block, targetWeekKey, "block"));
+        copiedBlocks += 1;
+      });
+    }
+
+    return { copiedAppointments, copiedBlocks, skipped, weekCount };
   }
 
   function getCalendarPlacementConflicts({
@@ -2145,6 +2279,40 @@
     elements.sessionModal.classList.add("hidden");
     elements.blockModal.classList.add("hidden");
     elements.summaryModal.classList.add("hidden");
+    elements.copyScheduleModal.classList.add("hidden");
+  }
+
+  function updateCopyScheduleDestination() {
+    const weekCount = clamp(Number(elements.copyScheduleWeekCountInput.value) || 1, 1, 52);
+    const firstWeekStart = addDays(startOfWeek(state.weekStart), 7);
+    const finalWeekEnd = addDays(startOfWeek(state.weekStart), weekCount * 7 + 4);
+    const label = weekCount === 1 ? "Next week" : `Next ${weekCount} weeks`;
+    elements.copyScheduleDestinationLabel.textContent =
+      `${label}: ${formatMonthDay(firstWeekStart)} – ${formatMonthDay(finalWeekEnd)}`;
+  }
+
+  function showCopyScheduleModal() {
+    if (state.view !== "week") return;
+    const sourceWeekKey = dateKey(startOfWeek(state.weekStart));
+    const appointmentCount = state.appointments.filter((item) => item.weekKey === sourceWeekKey).length;
+    const blockCount = state.blocks.filter((item) => item.weekKey === sourceWeekKey).length;
+    const itemCount = appointmentCount + blockCount;
+    if (!itemCount) {
+      showToast("Add something to this week before copying it.");
+      return;
+    }
+    elements.copyScheduleWeekCountInput.value = "1";
+    elements.copyScheduleSourceLabel.textContent =
+      `Week of ${formatMonthDay(dateFromKey(sourceWeekKey))} · ${appointmentCount} ${appointmentCount === 1 ? "appointment" : "appointments"} · ${blockCount} ${blockCount === 1 ? "block" : "blocks"}`;
+    elements.confirmCopyScheduleBtn.disabled = false;
+    updateCopyScheduleDestination();
+    elements.copyScheduleModal.classList.remove("hidden");
+    elements.copyScheduleWeekCountInput.focus();
+    elements.copyScheduleWeekCountInput.select();
+  }
+
+  function hideCopyScheduleModal() {
+    elements.copyScheduleModal.classList.add("hidden");
   }
 
   function clinicRbtIdentifiers() {
@@ -2190,7 +2358,9 @@
       : "• ";
     elements.sessionBillingNotesInput.value = appointment.billingNotes || "";
     elements.sessionTargetsMetInput.checked = Boolean(appointment.targetsMet);
-    elements.sessionRepeatInput.value = appointment.recurrence === "weekly" ? "weekly" : "none";
+    elements.sessionRepeatInput.value = ["weekly", "biweekly", "monthly"].includes(appointment.recurrence)
+      ? appointment.recurrence
+      : "none";
     elements.sessionRepeatCountInput.value = String(appointment.recurrenceCount || 4);
     updateRepeatVisibility(elements.sessionRepeatInput, elements.sessionRepeatCountLabel);
     elements.sessionModal.classList.remove("hidden");
@@ -2490,6 +2660,24 @@
     showBlockModal();
   });
   elements.weeklySummaryBtn.addEventListener("click", showPeriodSummary);
+  elements.copyScheduleBtn.addEventListener("click", showCopyScheduleModal);
+  elements.copyScheduleWeekCountInput.addEventListener("input", updateCopyScheduleDestination);
+  elements.copyScheduleForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const sourceWeekKey = dateKey(startOfWeek(state.weekStart));
+    const result = copyScheduleToFutureWeeks(sourceWeekKey, elements.copyScheduleWeekCountInput.value);
+    saveState();
+    hideCopyScheduleModal();
+    render();
+    const copied = result.copiedAppointments + result.copiedBlocks;
+    const destination = result.weekCount === 1 ? "next week" : `${result.weekCount} future weeks`;
+    showToast(`Copied ${copied} ${copied === 1 ? "item" : "items"} to ${destination}${result.skipped ? ` · ${result.skipped} ${result.skipped === 1 ? "conflict" : "conflicts"} skipped` : ""}.`);
+  });
+  elements.closeCopyScheduleModalBtn.addEventListener("click", hideCopyScheduleModal);
+  elements.cancelCopyScheduleModalBtn.addEventListener("click", hideCopyScheduleModal);
+  elements.copyScheduleModal.addEventListener("click", (event) => {
+    if (event.target === elements.copyScheduleModal) hideCopyScheduleModal();
+  });
   elements.optimizerUsePriorityClient.addEventListener("change", () => {
     elements.optimizerPriorityClientLabel.classList.toggle(
       "hidden",
@@ -2637,13 +2825,12 @@
       .filter(Boolean);
     appointment.billingNotes = elements.sessionBillingNotesInput.value.trim();
     appointment.targetsMet = elements.sessionTargetsMetInput.checked;
-    if (elements.sessionRepeatInput.value === "weekly") {
-      createWeeklyRecurrences(
-        state.appointments,
-        appointment,
-        elements.sessionRepeatCountInput.value,
-        "session"
-      );
+    const recurrence = elements.sessionRepeatInput.value;
+    if (["weekly", "biweekly", "monthly"].includes(recurrence)) {
+      createSessionRecurrences(appointment, elements.sessionRepeatCountInput.value, recurrence);
+    } else {
+      appointment.recurrence = "none";
+      appointment.recurrenceCount = undefined;
     }
     saveState();
     hideDetailModals();
